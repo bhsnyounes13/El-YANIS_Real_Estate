@@ -1,0 +1,4 @@
+window._env = {
+  VITE_SUPABASE_URL: "https://rdjgpeajwomysmfnizbm.supabase.co",
+  VITE_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkamdwZWFqd29teXNtZm5pemJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2ODEwMDAsImV4cCI6MjA3NjI1NzAwMH0.uq8Wng8JjClBrAeqpbZvWM1GSbLxi-itVudcjldXUt8"
+};
