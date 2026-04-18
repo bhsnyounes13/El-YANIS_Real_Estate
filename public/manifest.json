@@ -1,1 +1,27 @@
-{ name: EL-YANIS Real Estate, short_name: EL-YANIS, description: Your trusted partner in finding the perfect property across Algeria, start_url: /, display: standalone, orientation: portrait, background_color: #ffffff, theme_color: #2563eb, scope: /, lang: en, icons: [ { src: /icons/icon-192x192.png, sizes: 192x192, type: image/png, purpose: any maskable }, { src: /icons/icon-512x512.png, sizes: 512x512, type: image/png, purpose: any maskable } ], categories: [business, real estate, lifestyle] }
+{
+  "name": "EL-YANIS Real Estate",
+  "short_name": "EL-YANIS",
+  "description": "Your trusted partner in finding the perfect property across Algeria",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "scope": "/",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/yanis.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/yanis.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "real estate", "lifestyle"]
+}

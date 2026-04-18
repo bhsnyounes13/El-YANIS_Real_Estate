@@ -1,83 +1,81 @@
-import { useState, useEffect } from 'react';
-import AgentCard from '../components/AgentCard';
-import { supabase, Agent } from '../lib/supabase';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useLanguage } from "@/i18n/LanguageContext";
+import { agents } from "@/data/mockData";
+import { Phone, Mail, Star } from "lucide-react";
 
-export default function Agents() {
-  const { t } = useLanguage();
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [propertyCounts, setPropertyCounts] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchAgents();
-  }, []);
-
-  const fetchAgents = async () => {
-    try {
-      const { data: agentsData, error: agentsError } = await supabase
-        .from('agents')
-        .select('*')
-        .order('name');
-
-      if (agentsError) throw agentsError;
-      setAgents(agentsData || []);
-
-      const { data: propertiesData, error: propertiesError } = await supabase
-        .from('properties')
-        .select('agent_id')
-        .eq('status', 'available');
-
-      if (propertiesError) throw propertiesError;
-
-      const counts: Record<string, number> = {};
-      propertiesData?.forEach((property) => {
-        if (property.agent_id) {
-          counts[property.agent_id] = (counts[property.agent_id] || 0) + 1;
-        }
-      });
-      setPropertyCounts(counts);
-    } catch (error) {
-      console.error('Error fetching agents:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+const Agents = () => {
+  const { language } = useLanguage();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            {t('agents.title')}
+    <div>
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-foreground via-navy-light to-foreground dark:from-background dark:via-navy-light/20 dark:to-background" />
+        <div className="absolute bottom-10 right-1/4 w-72 h-72 rounded-full bg-gold/15 blur-[100px] animate-pulse-soft" />
+        <div className="container relative z-10 py-24 text-center">
+          <span className="text-xs font-semibold uppercase tracking-widest text-gold font-display">
+            {language === "fr" ? "Notre Équipe" : language === "ar" ? "فريقنا" : "Our Team"}
+          </span>
+          <h1 className="mt-3 font-heading text-4xl font-bold text-primary-foreground md:text-5xl">
+            {language === "fr" ? "Nos Agents Experts" : language === "ar" ? "وكلاؤنا الخبراء" : "Our Expert Agents"}
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            {t('agents.subtitle')}
+          <p className="mx-auto mt-4 max-w-xl text-primary-foreground/70">
+            {language === "fr" ? "Des professionnels dévoués à votre réussite immobilière" : language === "ar" ? "محترفون مكرسون لنجاحك العقاري" : "Dedicated professionals committed to your real estate success"}
           </p>
+          <div className="mx-auto mt-6 gold-line" />
         </div>
+      </section>
 
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
-        ) : agents.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-12 text-center">
-            <p className="text-gray-600 dark:text-gray-400 text-lg">
-              No agents available at the moment.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {agents.map((agent) => (
-              <AgentCard
-                key={agent.id}
-                agent={agent}
-                propertyCount={propertyCounts[agent.id] || 0}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Agents Grid */}
+      <section className="container py-20">
+        <div className="grid gap-8 md:grid-cols-2 max-w-3xl mx-auto">
+          {agents.map((agent, i) => {
+            const bio = agent[`bio_${language}` as keyof typeof agent] as string;
+            return (
+              <div key={agent.id} className="premium-card p-8 text-center group animate-fade-in-up" style={{ animationDelay: `${i * 0.15}s` }}>
+                <img
+                  src={agent.photo}
+                  alt={agent.name}
+                  className="mx-auto h-28 w-28 rounded-2xl object-cover ring-4 ring-primary/10 transition-all duration-500 group-hover:ring-primary/25 group-hover:scale-105"
+                />
+                <h3 className="mt-5 font-heading text-xl font-semibold text-card-foreground">{agent.name}</h3>
+                <div className="mx-auto mt-2 gold-line" />
+                <div className="mt-3 flex items-center justify-center gap-1">
+                  {[...Array(5)].map((_, j) => (
+                    <Star key={j} className="h-3.5 w-3.5 fill-gold text-gold" />
+                  ))}
+                </div>
+                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{bio}</p>
+                <div className="mt-5 flex flex-col gap-2">
+                  <a href={`tel:${agent.phone}`} className="flex items-center justify-center gap-2 rounded-xl bg-muted/50 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors">
+                    <Phone className="h-4 w-4 text-primary" /> {agent.phone}
+                  </a>
+                  <a href={`mailto:${agent.email}`} className="flex items-center justify-center gap-2 rounded-xl bg-muted/50 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors">
+                    <Mail className="h-4 w-4 text-primary" /> {agent.email}
+                  </a>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Join CTA */}
+      <section className="container pb-20">
+        <div className="premium-card p-10 text-center md:p-16">
+          <h2 className="font-heading text-3xl font-bold text-card-foreground">
+            {language === "fr" ? "Rejoignez Notre Équipe" : language === "ar" ? "انضم إلى فريقنا" : "Join Our Team"}
+          </h2>
+          <p className="mx-auto mt-3 max-w-lg text-muted-foreground">
+            {language === "fr" ? "Nous recherchons des agents passionnés par l'immobilier" : language === "ar" ? "نبحث عن وكلاء شغوفين بالعقارات" : "We're looking for passionate real estate professionals"}
+          </p>
+          <div className="mx-auto mt-4 gold-line" />
+          <a href="/contact" className="mt-8 inline-block rounded-full gradient-cta px-8 py-3 text-sm font-semibold">
+            {language === "fr" ? "Postuler" : language === "ar" ? "قدّم طلبك" : "Apply Now"}
+          </a>
+        </div>
+      </section>
     </div>
   );
-}
+};
+
+export default Agents;

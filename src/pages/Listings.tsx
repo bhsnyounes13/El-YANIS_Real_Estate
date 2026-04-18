@@ -1,259 +1,191 @@
-import { useState, useEffect } from 'react';
-import { Filter, X } from 'lucide-react';
-import PropertyCard from '../components/PropertyCard';
-import { supabase, Property } from '../lib/supabase';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { properties } from "@/data/mockData";
+import PropertyCard from "@/components/PropertyCard";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, SlidersHorizontal, X, Building2 } from "lucide-react";
 
-interface ListingsProps {
-  onNavigate: (page: string, propertyId?: string) => void;
-}
-
-export default function Listings({ onNavigate }: ListingsProps) {
-  const { t } = useLanguage();
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
+const Listings = () => {
+  const { t, language } = useLanguage();
+  const [searchParams] = useSearchParams();
   const [showFilters, setShowFilters] = useState(false);
 
-  const [filters, setFilters] = useState({
-    search: '',
-    type: 'all',
-    city: 'all',
-    minPrice: '',
-    maxPrice: '',
-    bedrooms: 'all',
-    bathrooms: 'all',
-  });
+  const [keyword, setKeyword] = useState(searchParams.get("q") || "");
+  const [type, setType] = useState(searchParams.get("type") || "");
+  const [city, setCity] = useState(searchParams.get("city") || "");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [bedrooms, setBedrooms] = useState("");
+  const [bathrooms, setBathrooms] = useState("");
 
-  useEffect(() => {
-    fetchProperties();
-  }, [filters]);
-
-  const fetchProperties = async () => {
-    try {
-      setLoading(true);
-      let query = supabase
-        .from('properties')
-        .select('*, agent:agents(*)')
-        .eq('status', 'available');
-
-      if (filters.type !== 'all') {
-        query = query.eq('type', filters.type);
+  const filtered = useMemo(() => {
+    return properties.filter((p) => {
+      if (type && p.type !== type) return false;
+      if (city && p.city !== city) return false;
+      if (minPrice && p.price < Number(minPrice)) return false;
+      if (maxPrice && p.price > Number(maxPrice)) return false;
+      if (bedrooms && p.bedrooms < Number(bedrooms)) return false;
+      if (bathrooms && p.bathrooms < Number(bathrooms)) return false;
+      if (keyword) {
+        const q = keyword.toLowerCase();
+        const searchable = `${p.title_en} ${p.title_fr} ${p.title_ar} ${p.description_en}`.toLowerCase();
+        if (!searchable.includes(q)) return false;
       }
-
-      if (filters.city !== 'all') {
-        query = query.eq('city', filters.city);
-      }
-
-      if (filters.bedrooms !== 'all') {
-        query = query.eq('bedrooms', parseInt(filters.bedrooms));
-      }
-
-      if (filters.bathrooms !== 'all') {
-        query = query.eq('bathrooms', parseInt(filters.bathrooms));
-      }
-
-      if (filters.minPrice) {
-        query = query.gte('price', parseFloat(filters.minPrice));
-      }
-
-      if (filters.maxPrice) {
-        query = query.lte('price', parseFloat(filters.maxPrice));
-      }
-
-      if (filters.search) {
-        query = query.or(`title.ilike.%${filters.search}%,city.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setProperties(data || []);
-    } catch (error) {
-      console.error('Error fetching properties:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
+      return true;
+    });
+  }, [keyword, type, city, minPrice, maxPrice, bedrooms, bathrooms]);
 
   const clearFilters = () => {
-    setFilters({
-      search: '',
-      type: 'all',
-      city: 'all',
-      minPrice: '',
-      maxPrice: '',
-      bedrooms: 'all',
-      bathrooms: 'all',
-    });
+    setKeyword(""); setType(""); setCity("");
+    setMinPrice(""); setMaxPrice(""); setBedrooms(""); setBathrooms("");
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-              {t('listings.title')}
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              {loading ? t('listings.loading') : `${properties.length} ${t('listings.subtitle')}`}
-            </p>
-          </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="md:hidden flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg"
-          >
-            <Filter className="h-5 w-5 mr-2" />
-            Filters
-          </button>
+  const selectClass = "h-11 w-full rounded-xl border border-border bg-background px-4 text-sm text-foreground outline-none transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/30";
+
+  const FilterPanel = () => (
+    <div className="space-y-5">
+      <div className="relative">
+        <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder={t("hero.search")}
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          className="h-11 rounded-xl pl-10"
+        />
+      </div>
+
+      <div>
+        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-display">{t("type.all")}</label>
+        <select value={type} onChange={(e) => setType(e.target.value)} className={selectClass + " mt-1.5"}>
+          <option value="">{t("type.all")}</option>
+          <option value="sale">{t("type.sale")}</option>
+          <option value="rent">{t("type.rent")}</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-display">{t("city.all")}</label>
+        <select value={city} onChange={(e) => setCity(e.target.value)} className={selectClass + " mt-1.5"}>
+          <option value="">{t("city.all")}</option>
+          <option value="tlemcen">{t("city.tlemcen")}</option>
+          <option value="ainTemouchent">{t("city.ainTemouchent")}</option>
+          <option value="sidiBelAbbes">{t("city.sidiBelAbbes")}</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-display">{t("listings.price")}</label>
+        <div className="mt-1.5 flex gap-2">
+          <Input placeholder={t("listings.priceMin")} type="number" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} className="h-11 rounded-xl" />
+          <Input placeholder={t("listings.priceMax")} type="number" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} className="h-11 rounded-xl" />
         </div>
+      </div>
 
-        <div className="flex flex-col md:flex-row gap-8">
-          <aside className={`${showFilters ? 'block' : 'hidden'} md:block w-full md:w-80 flex-shrink-0`}>
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 sticky top-24">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Filters</h2>
-                <button
-                  onClick={clearFilters}
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center"
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  Clear
-                </button>
-              </div>
+      <div>
+        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-display">{t("listings.bedrooms")}</label>
+        <select value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} className={selectClass + " mt-1.5"}>
+          <option value="">{t("listings.any")}</option>
+          <option value="1">1+</option>
+          <option value="2">2+</option>
+          <option value="3">3+</option>
+          <option value="4">4+</option>
+        </select>
+      </div>
 
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Search
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Keyword or city..."
-                    value={filters.search}
-                    onChange={(e) => handleFilterChange('search', e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
+      <div>
+        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-display">{t("listings.bathrooms")}</label>
+        <select value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} className={selectClass + " mt-1.5"}>
+          <option value="">{t("listings.any")}</option>
+          <option value="1">1+</option>
+          <option value="2">2+</option>
+          <option value="3">3+</option>
+        </select>
+      </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Property Type
-                  </label>
-                  <select
-                    value={filters.type}
-                    onChange={(e) => handleFilterChange('type', e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  >
-                    <option value="all">{t('search.allTypes')}</option>
-                    <option value="sale">{t('search.sale')}</option>
-                    <option value="rent">{t('search.rent')}</option>
-                  </select>
-                </div>
+      <Button variant="outline" className="w-full rounded-xl h-11" onClick={clearFilters}>
+        {t("listings.clear")}
+      </Button>
+    </div>
+  );
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    City
-                  </label>
-                  <select
-                    value={filters.city}
-                    onChange={(e) => handleFilterChange('city', e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  >
-                    <option value="all">{t('search.allCities')}</option>
-                    <option value="Tlemcen">{t('city.tlemcen')}</option>
-                    <option value="Ain Temouchent">{t('city.aintemouchent')}</option>
-                    <option value="Sidi Bel Abbès">{t('city.sidibelabbes')}</option>
-                  </select>
-                </div>
+  return (
+    <div className="container py-10">
+      {/* Header */}
+      <div className="flex items-end justify-between mb-8">
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-widest text-gold font-display">
+            {language === "fr" ? "Explorer" : language === "ar" ? "اكتشف" : "Explore"}
+          </span>
+          <h1 className="mt-1 font-heading text-3xl font-bold text-foreground md:text-4xl">{t("listings.title")}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {filtered.length} {language === "fr" ? "propriétés trouvées" : language === "ar" ? "عقار" : "properties found"}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          className="md:hidden rounded-xl"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <SlidersHorizontal className="mr-2 h-4 w-4" />
+          {t("listings.showFilters")}
+        </Button>
+      </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Price Range (DZD)
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="number"
-                      placeholder="Min"
-                      value={filters.minPrice}
-                      onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                      className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Max"
-                      value={filters.maxPrice}
-                      onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                      className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  </div>
-                </div>
+      <div className="flex gap-8">
+        {/* Desktop sidebar */}
+        <aside className="hidden w-72 shrink-0 md:block">
+          <div className="sticky top-24 premium-card p-6">
+            <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-gold font-display mb-5">
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              {t("listings.filters")}
+            </h3>
+            <FilterPanel />
+          </div>
+        </aside>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Bedrooms
-                  </label>
-                  <select
-                    value={filters.bedrooms}
-                    onChange={(e) => handleFilterChange('bedrooms', e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  >
-                    <option value="all">Any</option>
-                    <option value="1">1+</option>
-                    <option value="2">2+</option>
-                    <option value="3">3+</option>
-                    <option value="4">4+</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Bathrooms
-                  </label>
-                  <select
-                    value={filters.bathrooms}
-                    onChange={(e) => handleFilterChange('bathrooms', e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  >
-                    <option value="all">Any</option>
-                    <option value="1">1+</option>
-                    <option value="2">2+</option>
-                    <option value="3">3+</option>
-                  </select>
-                </div>
-              </div>
+        {/* Mobile filter overlay */}
+        {showFilters && (
+          <div className="fixed inset-0 z-50 bg-background p-6 md:hidden overflow-y-auto animate-slide-in-right">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-heading text-xl font-bold">{t("listings.filters")}</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowFilters(false)}>
+                <X className="h-5 w-5" />
+              </Button>
             </div>
-          </aside>
+            <FilterPanel />
+            <Button className="mt-6 w-full gradient-cta h-12 rounded-xl" onClick={() => setShowFilters(false)}>
+              {t("hero.searchBtn")}
+            </Button>
+          </div>
+        )}
 
-          <main className="flex-1">
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        {/* Property grid */}
+        <div className="flex-1">
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center py-24 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
+                <Building2 className="h-8 w-8 text-muted-foreground" />
               </div>
-            ) : properties.length === 0 ? (
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-12 text-center">
-                <p className="text-gray-600 dark:text-gray-400 text-lg">
-                  {t('listings.noResults')}
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {properties.map((property) => (
-                  <PropertyCard
-                    key={property.id}
-                    property={property}
-                    onClick={() => onNavigate('property', property.id)}
-                  />
-                ))}
-              </div>
-            )}
-          </main>
+              <p className="text-lg font-medium text-foreground">{t("listings.noResults")}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {language === "fr" ? "Essayez d'ajuster vos filtres" : language === "ar" ? "حاول تعديل عوامل التصفية" : "Try adjusting your filters"}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2">
+              {filtered.map((p, i) => (
+                <div key={p.id} className="animate-fade-in-up" style={{ animationDelay: `${i * 0.05}s` }}>
+                  <PropertyCard property={p} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default Listings;

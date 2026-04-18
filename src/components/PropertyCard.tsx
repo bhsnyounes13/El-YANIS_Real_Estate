@@ -1,118 +1,78 @@
-import { useNavigate } from 'react-router-dom';
-import { Bed, Bath, Maximize, MapPin, Tag } from 'lucide-react';
-import { Property } from '../lib/supabase';
-import { useLanguage } from '../contexts/LanguageContext';
+import { Link } from "react-router-dom";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { MapPin, BedDouble, Bath, Maximize } from "lucide-react";
+import LazyImage from "./LazyImage";
+import type { Property } from "@/data/mockData";
 
 interface PropertyCardProps {
   property: Property;
-  onClick?: () => void;
 }
 
-export default function PropertyCard({ property, onClick }: PropertyCardProps) {
-  const navigate = useNavigate();
+const PropertyCard = ({ property }: PropertyCardProps) => {
   const { language, t } = useLanguage();
 
-  const getTitle = () => {
-    return (property as any).title || '';
-  };
+  const title = property[`title_${language}` as keyof Property] as string;
+  const cityKey = `city.${property.city}`;
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fr-DZ', {
-      style: 'currency',
-      currency: 'DZD',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
-
-  const handleClick = () => {
-    navigate(`/property/${property.id}`);
+    return new Intl.NumberFormat(language === "ar" ? "ar-DZ" : language === "fr" ? "fr-DZ" : "en-US").format(price);
   };
 
   return (
-    <div
-      onClick={handleClick}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl card-3d cursor-pointer overflow-hidden group animate-fade-in"
-    >
-      <div className="relative h-56 overflow-hidden">
-        <img
-          src={property.images?.[0] || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg'}
-          alt={getTitle()}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-          loading="lazy"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg';
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-        <div className="absolute top-4 left-4 flex gap-2">
-          <span className="px-3 py-1 bg-gradient-to-r from-blue-600 to-blue-500 text-white text-xs font-semibold rounded-full shadow-lg backdrop-blur-sm">
-            {property.type === 'sale' ? t('search.sale') : t('search.rent')}
+    <Link to={`/property/${property.id}`} className="group block">
+      <div className="premium-card">
+        <div className="relative aspect-[16/10] overflow-hidden">
+          <LazyImage
+            src={property.images[0]}
+            alt={title}
+            className="h-full w-full transition-transform duration-700 ease-out group-hover:scale-110"
+          />
+          {/* Overlay gradient on hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+
+          <span className={`absolute top-3 ${language === "ar" ? "right-3" : "left-3"} ${
+            property.type === "sale" ? "premium-badge" : "rent-badge"
+          }`}>
+            {t(`type.${property.type}`)}
           </span>
-          {property.status !== 'available' && (
-            <span className="px-3 py-1 bg-gray-900/90 text-white text-xs font-semibold rounded-full capitalize backdrop-blur-sm">
-              {property.status}
+
+          {/* Price overlay on hover */}
+          <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between opacity-0 transition-all duration-500 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0">
+            <span className="text-lg font-bold text-primary-foreground font-display drop-shadow-lg">
+              {formatPrice(property.price)} {t("property.dzd")}
             </span>
-          )}
+          </div>
         </div>
-      </div>
-
-      <div className="p-5">
-        <div className="flex items-start justify-between mb-3">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1 flex-1">
-            {getTitle()}
+        <div className="p-5">
+          <h3 className="font-heading text-lg font-semibold text-card-foreground line-clamp-1 group-hover:text-primary transition-colors duration-300">
+            {title}
           </h3>
-        </div>
+          <div className="mt-1.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+            <MapPin className="h-3.5 w-3.5 text-gold" />
+            <span>{t(cityKey)}</span>
+          </div>
 
-        <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm mb-3">
-          <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
-          <span className="line-clamp-1">{property.city}</span>
-        </div>
-
-        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
-          {property.bedrooms && (
-            <div className="flex items-center">
-              <Bed className="h-4 w-4 mr-1" />
-              <span>{property.bedrooms}</span>
+          <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-4">
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <BedDouble className="h-3.5 w-3.5" /> {property.bedrooms}
+              </span>
+              <span className="flex items-center gap-1">
+                <Bath className="h-3.5 w-3.5" /> {property.bathrooms}
+              </span>
+              <span className="flex items-center gap-1">
+                <Maximize className="h-3.5 w-3.5" /> {property.area} {t("property.area")}
+              </span>
             </div>
-          )}
-          {property.bathrooms && (
-            <div className="flex items-center">
-              <Bath className="h-4 w-4 mr-1" />
-              <span>{property.bathrooms}</span>
+            <div className="font-display text-sm font-bold text-gradient">
+              {formatPrice(property.price)}
+              {property.type === "rent" && <span className="text-xs font-normal text-muted-foreground">/{language === "fr" ? "mois" : language === "ar" ? "شهر" : "mo"}</span>}
             </div>
-          )}
-          {property.area_m2 && (
-            <div className="flex items-center">
-              <Maximize className="h-4 w-4 mr-1" />
-              <span>{property.area_m2} m²</span>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-          {property.price ? (
-            <div className="flex items-center text-blue-600 dark:text-blue-400">
-              <Tag className="h-4 w-4 mr-1" />
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent">{formatPrice(property.price)}</span>
-            </div>
-          ) : (
-            <div className="flex items-center text-gray-600 dark:text-gray-400">
-              <Tag className="h-4 w-4 mr-1" />
-              <span className="text-sm font-medium">{t('property.priceOnRequest')}</span>
-            </div>
-          )}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClick();
-            }}
-            className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline transition-all hover:translate-x-1"
-          >
-            {t('property.viewDetails')}
-          </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
-}
+};
+
+export default PropertyCard;

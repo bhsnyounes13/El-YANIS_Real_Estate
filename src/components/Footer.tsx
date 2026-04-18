@@ -1,137 +1,87 @@
-import { Mail, Phone, MapPin, Facebook, Instagram, MessageCircle } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
+import { Link } from "react-router-dom";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { Phone, Mail, MapPin, ArrowUpRight } from "lucide-react";
+import logo from "@/assets/logo.jpg";
 
-interface FooterProps {
-  onNavigate: (page: string) => void;
-}
-
-export default function Footer({ onNavigate }: FooterProps) {
-  const { t } = useLanguage();
+const Footer = () => {
+  const { t, language } = useLanguage();
 
   return (
-    <footer className="bg-gray-900 dark:bg-gray-950 text-gray-300 transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <footer className="relative overflow-hidden border-t bg-card">
+      {/* Subtle gradient accent at top */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+
+      <div className="container py-16">
+        <div className="grid gap-10 md:grid-cols-3">
+          {/* Brand */}
           <div>
-            <div className="flex items-center mb-4">
-              <img
-                src="/yanis.jpg"
-                alt="EL-YANIS Real Estate Logo"
-                className="h-10 w-10 object-contain rounded-lg"
-              />
-              <span className="ml-3 text-xl font-bold text-white">
-                {t('site.name')}
+            <div className="flex items-center gap-2">
+              <img src={logo} alt="EL-YANIS" className="h-9 w-9 rounded-lg object-cover" />
+              <span className="font-heading text-xl font-bold text-card-foreground">{t("footer.brand")}</span>
+            </div>
+            <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-xs">{t("footer.desc")}</p>
+            <div className="mt-5 gold-line" />
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-gold font-display">{t("footer.links")}</h4>
+            <nav className="mt-4 flex flex-col gap-2.5">
+              {[
+                { key: "nav.home", path: "/" },
+                { key: "nav.listings", path: "/listings" },
+                { key: "nav.about", path: "/about" },
+                { key: "nav.contact", path: "/contact" },
+              ].map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className="group inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {t(link.key)}
+                  <ArrowUpRight className="h-3 w-3 opacity-0 transition-all group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-gold font-display">{t("footer.contactTitle")}</h4>
+            <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground">
+              <a href="tel:+213555123456" className="flex items-center gap-2.5 transition-colors hover:text-foreground">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <Phone className="h-3.5 w-3.5 text-primary" />
+                </div>
+                +213 555 123 456
+              </a>
+              <a href="mailto:contact@elyainis.com" className="flex items-center gap-2.5 transition-colors hover:text-foreground">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <Mail className="h-3.5 w-3.5 text-primary" />
+                </div>
+                contact@elyainis.com
+              </a>
+              <span className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <MapPin className="h-3.5 w-3.5 text-primary" />
+                </div>
+                Tlemcen, {language === "ar" ? "الجزائر" : language === "fr" ? "Algérie" : "Algeria"}
               </span>
             </div>
-            <p className="text-sm text-gray-400">
-              {t('site.tagline')}
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-white font-semibold mb-4">{t('contact.info.title')}</h3>
-            <div className="space-y-3">
-              <div className="flex items-center text-sm">
-                <Phone className="h-4 w-4 mr-3 text-blue-400" />
-                <span>0550835124</span>
-              </div>
-              <div className="flex items-center text-sm">
-                <Mail className="h-4 w-4 mr-3 text-blue-400" />
-                <span>elyanismo@gmail.com</span>
-              </div>
-              <a
-                href="https://maps.app.goo.gl/rqZn1A8Vw3XSwFSe7"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center text-sm hover:text-blue-400 transition-colors group"
-              >
-                <MapPin className="h-4 w-4 mr-3 text-blue-400 group-hover:scale-110 transition-transform" />
-                <span className="group-hover:underline">Remchi, Tlemcen, Algeria</span>
-              </a>
-              <a
-                href="https://wa.me/213550835124"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center text-sm hover:text-green-400 transition-colors group"
-              >
-                <MessageCircle className="h-4 w-4 mr-3 text-green-400 group-hover:scale-110 transition-transform" />
-                <span className="group-hover:underline">WhatsApp</span>
-              </a>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-white font-semibold mb-4">{t('footer.quickLinks')}</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <button onClick={() => onNavigate('listings?type=sale')} className="hover:text-blue-400 transition-colors text-left">
-                  {t('footer.propertiesSale')}
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('listings?type=rent')} className="hover:text-blue-400 transition-colors text-left">
-                  {t('footer.propertiesRent')}
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('agents')} className="hover:text-blue-400 transition-colors text-left">
-                  {t('footer.ourAgents')}
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('about')} className="hover:text-blue-400 transition-colors text-left">
-                  {t('footer.aboutUs')}
-                </button>
-              </li>
-            </ul>
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-gray-400 mb-4 md:mb-0">
-              &copy; {new Date().getFullYear()} {t('site.name')}. {t('footer.copyright')}
-            </p>
-            <div className="flex items-center space-x-1">
-              <span className="text-sm text-gray-400 mr-3">{t('footer.followUs')}</span>
-              <a
-                href="https://www.facebook.com/elyanis73"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-gray-800 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-all hover:scale-110"
-                aria-label="Follow us on Facebook"
-              >
-                <Facebook className="h-5 w-5 text-gray-300" />
-              </a>
-              <a
-                href="https://www.instagram.com/_el_yanis/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-gray-800 hover:bg-gradient-to-br hover:from-purple-600 hover:to-pink-500 rounded-lg flex items-center justify-center transition-all hover:scale-110"
-                aria-label="Follow us on Instagram"
-              >
-                <Instagram className="h-5 w-5 text-gray-300" />
-              </a>
-              <a
-                href="https://www.tiktok.com/@_elyanis"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-gray-800 hover:bg-black rounded-lg flex items-center justify-center transition-all hover:scale-110"
-                aria-label="Follow us on TikTok"
-              >
-                <svg
-                  className="h-5 w-5 text-gray-300"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-                </svg>
-              </a>
-            </div>
-          </div>
+        <div className="mt-14 flex flex-col items-center gap-3 border-t border-border/50 pt-8 md:flex-row md:justify-between">
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} EL-YANIS. {t("footer.rights")}
+          </p>
+          <p className="text-xs text-muted-foreground/50">
+            {language === "fr" ? "Conçu avec excellence" : language === "ar" ? "صُمم بتميز" : "Crafted with excellence"}
+          </p>
         </div>
       </div>
     </footer>
   );
-}
+};
+
+export default Footer;

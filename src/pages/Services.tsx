@@ -1,199 +1,98 @@
-import { Calculator, Users, Scale, CheckCircle, ArrowRight, MessageCircle } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useLanguage } from "@/i18n/LanguageContext";
+import { Building2, TrendingUp, Handshake, FileText, Scale, Paintbrush } from "lucide-react";
 
-export default function Services() {
-  const { t } = useLanguage();
+const services = [
+  {
+    icon: Building2,
+    title: { en: "Property Sales", fr: "Vente Immobilière", ar: "بيع العقارات" },
+    desc: { en: "We help you sell your property at the best market value with professional marketing, photography, and negotiation support.", fr: "Nous vous aidons à vendre votre propriété au meilleur prix du marché avec un marketing professionnel, des photos et un soutien à la négociation.", ar: "نساعدك في بيع عقارك بأفضل قيمة سوقية مع التسويق الاحترافي والتصوير ودعم التفاوض." },
+  },
+  {
+    icon: TrendingUp,
+    title: { en: "Property Investment", fr: "Investissement Immobilier", ar: "الاستثمار العقاري" },
+    desc: { en: "Expert guidance on real estate investment opportunities across western Algeria with detailed market analysis and ROI projections.", fr: "Conseils d'experts sur les opportunités d'investissement immobilier dans l'ouest algérien avec des analyses de marché détaillées.", ar: "إرشادات خبيرة حول فرص الاستثمار العقاري في غرب الجزائر مع تحليل مفصل للسوق." },
+  },
+  {
+    icon: Handshake,
+    title: { en: "Property Rental", fr: "Location Immobilière", ar: "تأجير العقارات" },
+    desc: { en: "Find the perfect rental property or list your property for rent with our comprehensive tenant screening and management services.", fr: "Trouvez la propriété locative idéale ou mettez votre bien en location avec nos services complets de sélection et de gestion des locataires.", ar: "اعثر على العقار المثالي للإيجار أو اعرض عقارك للإيجار مع خدمات فحص وإدارة المستأجرين الشاملة." },
+  },
+  {
+    icon: FileText,
+    title: { en: "Legal Assistance", fr: "Assistance Juridique", ar: "المساعدة القانونية" },
+    desc: { en: "Navigate the legal complexities of real estate transactions with our experienced legal team handling contracts, permits, and documentation.", fr: "Naviguez dans les complexités juridiques des transactions immobilières avec notre équipe juridique expérimentée.", ar: "تعامل مع التعقيدات القانونية للمعاملات العقارية مع فريقنا القانوني ذو الخبرة." },
+  },
+  {
+    icon: Scale,
+    title: { en: "Property Valuation", fr: "Évaluation Immobilière", ar: "تقييم العقارات" },
+    desc: { en: "Accurate property valuation services using advanced market data analysis and professional assessment methodologies.", fr: "Services d'évaluation immobilière précis utilisant l'analyse avancée des données du marché et des méthodologies d'évaluation professionnelles.", ar: "خدمات تقييم عقاري دقيقة باستخدام تحليل بيانات السوق المتقدم ومنهجيات التقييم المهنية." },
+  },
+  {
+    icon: Paintbrush,
+    title: { en: "Interior Design", fr: "Design d'Intérieur", ar: "التصميم الداخلي" },
+    desc: { en: "Transform your property with our interior design consultation services, creating spaces that reflect your style and maximize value.", fr: "Transformez votre propriété avec nos services de consultation en design d'intérieur, créant des espaces qui reflètent votre style.", ar: "حوّل عقارك مع خدمات استشارات التصميم الداخلي، لإنشاء مساحات تعكس أسلوبك وتزيد القيمة." },
+  },
+];
 
-  const services = [
-    {
-      icon: Calculator,
-      title: t('services.estimation.title'),
-      description: t('services.estimation.desc'),
-      features: [
-        t('services.estimation.feature1'),
-        t('services.estimation.feature2'),
-        t('services.estimation.feature3'),
-        t('services.estimation.feature4'),
-      ],
-      gradient: 'from-blue-500 to-cyan-500',
-      bgGradient: 'from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20',
-    },
-    {
-      icon: Users,
-      title: t('services.accompagnement.title'),
-      description: t('services.accompagnement.desc'),
-      features: [
-        t('services.accompagnement.feature1'),
-        t('services.accompagnement.feature2'),
-        t('services.accompagnement.feature3'),
-        t('services.accompagnement.feature4'),
-      ],
-      gradient: 'from-emerald-500 to-teal-500',
-      bgGradient: 'from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20',
-    },
-    {
-      icon: Scale,
-      title: t('services.conseil.title'),
-      description: t('services.conseil.desc'),
-      features: [
-        t('services.conseil.feature1'),
-        t('services.conseil.feature2'),
-        t('services.conseil.feature3'),
-        t('services.conseil.feature4'),
-      ],
-      gradient: 'from-amber-500 to-orange-500',
-      bgGradient: 'from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20',
-    },
-  ];
+const Services = () => {
+  const { language } = useLanguage();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-      <section className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 dark:from-blue-800 dark:via-blue-900 dark:to-blue-950 text-white py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-blue-900/30"></div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center animate-fade-in">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-              {t('services.title')}
-            </h1>
-            <p className="text-lg md:text-xl text-blue-100 max-w-3xl mx-auto leading-relaxed">
-              {t('services.subtitle')}
-            </p>
-          </div>
+    <div>
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-foreground via-navy-light to-foreground dark:from-background dark:via-navy-light/20 dark:to-background" />
+        <div className="absolute top-20 left-1/4 w-96 h-96 rounded-full bg-primary/20 blur-[120px] animate-pulse-soft" />
+        <div className="container relative z-10 py-24 text-center">
+          <span className="text-xs font-semibold uppercase tracking-widest text-gold font-display">
+            {language === "fr" ? "Ce Que Nous Offrons" : language === "ar" ? "ما نقدمه" : "What We Offer"}
+          </span>
+          <h1 className="mt-3 font-heading text-4xl font-bold text-primary-foreground md:text-5xl">
+            {language === "fr" ? "Nos Services" : language === "ar" ? "خدماتنا" : "Our Services"}
+          </h1>
+          <p className="mx-auto mt-4 max-w-xl text-primary-foreground/70">
+            {language === "fr" ? "Des solutions immobilières complètes adaptées à vos besoins" : language === "ar" ? "حلول عقارية شاملة مصممة لتلبية احتياجاتك" : "Comprehensive real estate solutions tailored to your needs"}
+          </p>
+          <div className="mx-auto mt-6 gold-line" />
         </div>
       </section>
 
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {services.map((service, index) => (
-              <div
-                key={index}
-                className="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden animate-slide-up"
-                style={{ animationDelay: `${index * 150}ms` }}
-              >
-                <div className={`h-2 bg-gradient-to-r ${service.gradient}`}></div>
-
-                <div className="p-8">
-                  <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${service.bgGradient} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                    <service.icon className={`h-8 w-8 bg-gradient-to-br ${service.gradient} bg-clip-text text-transparent`} strokeWidth={2} />
-                  </div>
-
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                    {service.title}
-                  </h3>
-
-                  <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
-                    {service.description}
-                  </p>
-
-                  <div className="space-y-3 mb-6">
-                    {service.features.map((feature, idx) => (
-                      <div key={idx} className="flex items-start">
-                        <CheckCircle className={`h-5 w-5 mt-0.5 mr-3 flex-shrink-0 bg-gradient-to-br ${service.gradient} bg-clip-text text-transparent`} />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
-                          {feature}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <a
-                    href="https://wa.me/213550835124"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r ${service.gradient} text-white font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300 group`}
-                  >
-                    <MessageCircle className="h-5 w-5 mr-2" />
-                    {t('services.contactUs')}
-                    <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </a>
-                </div>
+      {/* Services Grid */}
+      <section className="container py-20">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {services.map((service, i) => (
+            <div key={i} className="premium-card p-8 group animate-fade-in-up" style={{ animationDelay: `${i * 0.1}s` }}>
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 transition-all duration-500 group-hover:bg-primary/20 group-hover:scale-110">
+                <service.icon className="h-7 w-7 text-primary" />
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 md:p-12">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                {t('services.cta.title')}
-              </h2>
-              <p className="text-lg text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
-                {t('services.cta.desc')}
+              <h3 className="mt-5 font-heading text-xl font-semibold text-card-foreground">
+                {service.title[language]}
+              </h3>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                {service.desc[language]}
               </p>
             </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <a
-                href="https://wa.me/213550835124"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300"
-              >
-                <MessageCircle className="h-5 w-5 mr-2" />
-                {t('services.cta.whatsapp')}
-              </a>
-              <a
-                href="tel:0550835124"
-                className="flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300"
-              >
-                <span className="text-2xl mr-2">📞</span>
-                {t('services.cta.call')}
-              </a>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-              {t('services.why.title')}
-            </h2>
-            <p className="text-lg text-gray-700 dark:text-gray-300 max-w-3xl mx-auto mb-12">
-              {t('services.why.desc')}
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105">
-                <div className="text-4xl mb-4">🏆</div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  {t('services.why.expertise')}
-                </h3>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {t('services.why.expertiseDesc')}
-                </p>
-              </div>
-
-              <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105">
-                <div className="text-4xl mb-4">⚡</div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  {t('services.why.fast')}
-                </h3>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {t('services.why.fastDesc')}
-                </p>
-              </div>
-
-              <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105">
-                <div className="text-4xl mb-4">💎</div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  {t('services.why.quality')}
-                </h3>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {t('services.why.qualityDesc')}
-                </p>
-              </div>
-            </div>
-          </div>
+      {/* CTA */}
+      <section className="container pb-20">
+        <div className="premium-card p-10 text-center md:p-16">
+          <h2 className="font-heading text-3xl font-bold text-card-foreground">
+            {language === "fr" ? "Besoin d'un Service Personnalisé ?" : language === "ar" ? "هل تحتاج خدمة مخصصة؟" : "Need a Customized Service?"}
+          </h2>
+          <p className="mx-auto mt-3 max-w-lg text-muted-foreground">
+            {language === "fr" ? "Contactez-nous pour discuter de vos besoins spécifiques" : language === "ar" ? "تواصل معنا لمناقشة احتياجاتك الخاصة" : "Get in touch to discuss your specific requirements"}
+          </p>
+          <div className="mx-auto mt-4 gold-line" />
+          <a href="/contact" className="mt-8 inline-block rounded-full gradient-cta px-8 py-3 text-sm font-semibold">
+            {language === "fr" ? "Contactez-nous" : language === "ar" ? "اتصل بنا" : "Contact Us"}
+          </a>
         </div>
       </section>
     </div>
   );
-}
+};
+
+export default Services;
