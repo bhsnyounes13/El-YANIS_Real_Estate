@@ -3,8 +3,8 @@
 interface ImportMetaEnv {
   readonly VITE_API_URL?: string;
   /**
-   * Origine de l’API d’auth si différente du site (ex: `https://api.example.com`).
-   * Vide = URLs relatives `/api/...` (proxy Vite en dev ou même domaine en prod).
+   * Repli si `VITE_API_URL` est vide : origine pour auth (ex. `https://api.example.com`).
+   * Sinon l’auth suit `VITE_API_URL` comme le catalogue.
    */
   readonly VITE_AUTH_API_BASE?: string;
   /** Chemin de base public (ex. `/app/` si l’app est sous un sous-dossier). Laisser vide pour la racine. */

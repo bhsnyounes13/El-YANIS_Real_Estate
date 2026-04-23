@@ -1,4 +1,4 @@
-import { fetchWithDiagnostics } from "@/lib/api/client";
+import { fetchWithDiagnostics, getApiBase, resolveApiUrl } from "@/lib/api/client";
 import { getAccessToken, setAccessToken } from "./accessToken";
 
 export type UserRole = "admin" | "user";
@@ -9,9 +9,24 @@ export interface AuthUser {
   role: UserRole;
 }
 
-function authUrl(path: string): string {
-  const base = (import.meta.env.VITE_AUTH_API_BASE as string | undefined)?.replace(/\/$/, "") ?? "";
-  return `${base}${path}`;
+/**
+ * Même règle que le catalogue : `VITE_API_URL` si défini au build, sinon repli `VITE_AUTH_API_BASE`,
+ * sinon chemins relatifs `/api/...` (même domaine + proxy).
+ */
+function resolveAuthPath(path: string): string {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  if (getApiBase()) return resolveApiUrl(normalized);
+  const legacy = (import.meta.env.VITE_AUTH_API_BASE as string | undefined)?.trim().replace(/\/$/, "") ?? "";
+  if (legacy) return `${legacy}${normalized}`;
+  return normalized;
+}
+
+function formatAuthFailure(kind: "login" | "register", status: number, bodyError?: string): string {
+  if (bodyError) return bodyError;
+  if (status === 404) {
+    return "API introuvable (404) : aucune route sur /api/… pour ce domaine. Déployez l’API Node, proxifiez /api/ vers Express (voir docs/HOSTINGER.md), ou définissez VITE_API_URL au build si l’API est sur un autre hôte.";
+  }
+  return kind === "login" ? `Échec de la connexion (${status})` : `Échec de l’inscription (${status})`;
 }
 
 async function parseJson<T>(res: Response): Promise<T> {
@@ -32,7 +47,7 @@ export async function loginRequest(
   accessToken: string;
   user: AuthUser;
 }> {
-  const res = await fetchWithDiagnostics(authUrl("/api/auth/login"), {
+  const res = await fetchWithDiagnostics(resolveAuthPath("/api/auth/login"), {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     credentials: "include",
@@ -44,7 +59,7 @@ export async function loginRequest(
   });
   const body = await parseJson<{ accessToken?: string; user?: AuthUser; error?: string }>(res);
   if (!res.ok) {
-    throw new Error(body.error ?? `Login failed (${res.status})`);
+    throw new Error(formatAuthFailure("login", res.status, body.error));
   }
   if (!body.accessToken || !body.user) throw new Error("Invalid login response");
   setAccessToken(body.accessToken);
@@ -59,7 +74,7 @@ export async function registerRequest(
   accessToken: string;
   user: AuthUser;
 }> {
-  const res = await fetchWithDiagnostics(authUrl("/api/auth/register"), {
+  const res = await fetchWithDiagnostics(resolveAuthPath("/api/auth/register"), {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     credentials: "include",
@@ -71,7 +86,7 @@ export async function registerRequest(
   });
   const body = await parseJson<{ accessToken?: string; user?: AuthUser; error?: string }>(res);
   if (!res.ok) {
-    throw new Error(body.error ?? `Register failed (${res.status})`);
+    throw new Error(formatAuthFailure("register", res.status, body.error));
   }
   if (!body.accessToken || !body.user) throw new Error("Invalid register response");
   setAccessToken(body.accessToken);
@@ -81,7 +96,7 @@ export async function registerRequest(
 export async function refreshSession(): Promise<{ accessToken: string; user: AuthUser } | null> {
   let res: Response;
   try {
-    res = await fetchWithDiagnostics(authUrl("/api/auth/refresh"), {
+    res = await fetchWithDiagnostics(resolveAuthPath("/api/auth/refresh"), {
       method: "POST",
       credentials: "include",
       headers: { Accept: "application/json" },
@@ -105,7 +120,7 @@ export async function refreshSession(): Promise<{ accessToken: string; user: Aut
 
 export async function logoutRequest(): Promise<void> {
   const token = getAccessToken();
-  await fetchWithDiagnostics(authUrl("/api/auth/logout"), {
+  await fetchWithDiagnostics(resolveAuthPath("/api/auth/logout"), {
     method: "POST",
     credentials: "include",
     headers: {
@@ -121,7 +136,7 @@ export async function fetchMe(): Promise<AuthUser | null> {
   if (!token) return null;
   let res: Response;
   try {
-    res = await fetchWithDiagnostics(authUrl("/api/auth/me"), {
+    res = await fetchWithDiagnostics(resolveAuthPath("/api/auth/me"), {
       credentials: "include",
       headers: {
         Accept: "application/json",
