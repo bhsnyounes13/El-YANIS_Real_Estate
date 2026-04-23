@@ -1,0 +1,23 @@
+# Optional — PostgreSQL in Docker (skip if you use a local PostgreSQL install).
+# Start container: npm run db:start:docker   (or: docker compose up -d)
+# Full setup with Docker: npm run db:setup:docker
+# If you changed credentials vs a previous volume: docker compose down -v
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: elyanis
+    ports:
+      - "5432:5432"
+    volumes:
+      - elyanis_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d elyanis"]
+      interval: 3s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  elyanis_pgdata:

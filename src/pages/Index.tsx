@@ -1,20 +1,26 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { properties } from "@/data/mockData";
 import PropertyCard from "@/components/PropertyCard";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Building2, Users, ShieldCheck, ArrowRight, Star, TrendingUp, MapPin } from "lucide-react";
+import { HeroSearch } from "@/components/HeroSearch";
+import { SectionShell } from "@/components/SectionShell";
+import { SectionHeading } from "@/components/SectionHeading";
+import { ApiErrorState } from "@/components/ApiErrorState";
+import { getQueryErrorDescription } from "@/lib/api/mapApiUserMessage";
+import { useFeaturedProperties } from "@/hooks/queries/useFeaturedProperties";
+import { Building2, Users, ShieldCheck, ArrowRight, MapPin } from "lucide-react";
 
 const Index = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
+  const { data: featured = [], isLoading, isError, error, refetch } = useFeaturedProperties();
+
   const [keyword, setKeyword] = useState("");
   const [type, setType] = useState("");
   const [city, setCity] = useState("");
 
-  const featured = properties.slice(0, 6);
+  const spotlight = featured[0];
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -31,189 +37,231 @@ const Index = () => {
   ];
 
   const stats = [
-    { value: "500+", label: language === "fr" ? "Propriétés" : language === "ar" ? "عقار" : "Properties", icon: Building2 },
-    { value: "200+", label: language === "fr" ? "Clients Satisfaits" : language === "ar" ? "عميل راضٍ" : "Happy Clients", icon: Star },
-    { value: "15+", label: language === "fr" ? "Années d'Expérience" : language === "ar" ? "سنة خبرة" : "Years Experience", icon: TrendingUp },
-    { value: "3", label: language === "fr" ? "Villes" : language === "ar" ? "مدن" : "Cities", icon: MapPin },
+    {
+      value: "500+",
+      label: language === "fr" ? "Propriétés" : language === "ar" ? "عقار" : "Properties",
+    },
+    {
+      value: "200+",
+      label: language === "fr" ? "Clients" : language === "ar" ? "عميل" : "Clients",
+    },
+    { value: "15+", label: language === "fr" ? "Années" : language === "ar" ? "سنوات" : "Years" },
+    { value: "3", label: language === "fr" ? "Villes" : language === "ar" ? "مدن" : "Cities" },
+  ];
+
+  const cities = [
+    { key: "city.tlemcen", slug: "tlemcen" as const },
+    { key: "city.ainTemouchent", slug: "ainTemouchent" as const },
+    { key: "city.sidiBelAbbes", slug: "sidiBelAbbes" as const },
   ];
 
   return (
     <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        {/* Layered gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-foreground via-navy-light to-foreground dark:from-background dark:via-navy-light/20 dark:to-background" />
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#0037b0] via-[#0a3cb8] to-[#1d4ed8] text-primary-foreground">
+        <div className="pointer-events-none absolute -start-32 top-20 h-96 w-96 rounded-full bg-white/10 blur-[120px]" />
+        <div className="pointer-events-none absolute -end-24 bottom-0 h-80 w-80 rounded-full bg-[#5e52b4]/25 blur-[100px]" />
 
-        {/* Ambient glow orbs */}
-        <div className="absolute top-20 left-1/4 w-96 h-96 rounded-full bg-primary/20 blur-[120px] animate-pulse-soft" />
-        <div className="absolute bottom-10 right-1/4 w-72 h-72 rounded-full bg-gold/15 blur-[100px] animate-pulse-soft" style={{ animationDelay: '1.5s' }} />
+        <div className="container relative z-[1] py-20 md:py-28 lg:py-32">
+          <div className="grid items-center gap-14 lg:grid-cols-12 lg:gap-10">
+            <div className="lg:col-span-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/70">
+                {t("home.heroEyebrow")}
+              </p>
+              <h1 className="mt-4 font-heading text-4xl font-bold leading-[1.05] tracking-[-0.03em] md:text-5xl lg:text-[3.35rem] text-balance-editorial">
+                {t("hero.title")}
+              </h1>
+              <p className="mt-6 max-w-xl text-base leading-relaxed text-white/80 md:text-lg">
+                {t("hero.subtitle")}
+              </p>
 
-        <div className="container relative z-10 py-28 md:py-40">
-          {/* Eyebrow */}
-          <div className="flex justify-center mb-6 animate-fade-in">
-            <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-gold">
-              <Star className="h-3 w-3 fill-current" />
-              {language === "fr" ? "Immobilier Premium" : language === "ar" ? "عقارات فاخرة" : "Premium Real Estate"}
-            </span>
-          </div>
+              <div className="mt-10">
+                <HeroSearch
+                  keyword={keyword}
+                  setKeyword={setKeyword}
+                  type={type}
+                  setType={setType}
+                  city={city}
+                  setCity={setCity}
+                  onSearch={handleSearch}
+                  t={t}
+                />
+              </div>
 
-          <h1 className="mx-auto max-w-4xl text-center font-heading text-4xl font-bold tracking-tight text-primary-foreground md:text-6xl lg:text-7xl animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            {t("hero.title")}
-          </h1>
+              <div className="mt-12 grid grid-cols-2 gap-6 rounded-3xl border border-white/15 bg-white/5 px-6 py-8 backdrop-blur-md md:grid-cols-4 md:gap-10 md:px-10">
+                {stats.map((s) => (
+                  <div key={s.label} className="text-center">
+                    <div className="font-heading text-3xl font-bold tracking-[-0.02em] text-white md:text-4xl">
+                      {s.value}
+                    </div>
+                    <div className="mt-1 text-[11px] font-medium uppercase tracking-[0.16em] text-white/65">
+                      {s.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-          <p className="mx-auto mt-6 max-w-2xl text-center text-lg text-primary-foreground/70 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            {t("hero.subtitle")}
-          </p>
-
-          {/* Gold accent line */}
-          <div className="flex justify-center mt-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <div className="gold-line" />
-          </div>
-
-          {/* Premium Search Bar */}
-          <div className="mx-auto mt-10 max-w-3xl animate-slide-up" style={{ animationDelay: '0.4s' }}>
-            <div className="glass-effect-strong rounded-2xl p-2 shadow-2xl">
-              <div className="flex flex-col gap-2 md:flex-row">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder={t("hero.search")}
-                    value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)}
-                    className="h-12 border-none bg-transparent pl-11 text-base shadow-none focus-visible:ring-0"
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            <div className="lg:col-span-6">
+              {isError ? (
+                <div className="rounded-3xl border border-white/20 bg-white/10 p-6 text-sm text-white/90 backdrop-blur-sm">
+                  <p className="font-medium">{getQueryErrorDescription(error, t)}</p>
+                  <button
+                    type="button"
+                    className="mt-4 rounded-full bg-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-wide hover:bg-white/25"
+                    onClick={() => void refetch()}
+                  >
+                    {t("common.retry")}
+                  </button>
+                </div>
+              ) : isLoading ? (
+                <div className="aspect-[4/5] w-full max-w-md animate-pulse rounded-3xl bg-white/10 ms-auto lg:max-w-none" />
+              ) : spotlight ? (
+                <div className="relative ms-auto max-w-md lg:max-w-none">
+                  <div
+                    className="absolute -inset-3 rounded-[28px] bg-gradient-to-br from-white/20 to-transparent blur-2xl"
+                    aria-hidden
                   />
-                </div>
-                <div className="flex gap-2">
-                  <select
-                    value={type}
-                    onChange={(e) => setType(e.target.value)}
-                    className="h-12 rounded-xl bg-muted/50 px-4 text-sm text-foreground outline-none transition-colors hover:bg-muted"
-                  >
-                    <option value="">{t("type.all")}</option>
-                    <option value="sale">{t("type.sale")}</option>
-                    <option value="rent">{t("type.rent")}</option>
-                  </select>
-                  <select
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="h-12 rounded-xl bg-muted/50 px-4 text-sm text-foreground outline-none transition-colors hover:bg-muted"
-                  >
-                    <option value="">{t("city.all")}</option>
-                    <option value="tlemcen">{t("city.tlemcen")}</option>
-                    <option value="ainTemouchent">{t("city.ainTemouchent")}</option>
-                    <option value="sidiBelAbbes">{t("city.sidiBelAbbes")}</option>
-                  </select>
-                  <Button onClick={handleSearch} className="h-12 rounded-xl gradient-cta px-6 text-base">
-                    <Search className="h-4 w-4 md:mr-2" />
-                    <span className="hidden md:inline">{t("hero.searchBtn")}</span>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Stats row */}
-          <div className="mx-auto mt-16 max-w-3xl animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              {stats.map((stat, i) => (
-                <div key={i} className="text-center">
-                  <div className="text-3xl font-bold text-primary-foreground font-display md:text-4xl animate-count-up" style={{ animationDelay: `${0.7 + i * 0.1}s` }}>
-                    {stat.value}
+                  <div className="relative overflow-hidden rounded-3xl shadow-[0_24px_80px_rgba(0,0,0,0.25)] ring-1 ring-white/20">
+                    <PropertyCard property={spotlight} />
                   </div>
-                  <div className="mt-1 text-xs uppercase tracking-widest text-primary-foreground/50 font-display">
-                    {stat.label}
-                  </div>
+                  <p className="mt-4 text-center text-[11px] font-medium uppercase tracking-[0.18em] text-white/60 lg:text-start">
+                    {t("home.spotlight")}
+                  </p>
                 </div>
-              ))}
+              ) : null}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="container py-20 md:py-28">
-        <div className="text-center mb-14">
-          <span className="text-xs font-semibold uppercase tracking-widest text-gold font-display">
-            {language === "fr" ? "Pourquoi Nous Choisir" : language === "ar" ? "لماذا تختارنا" : "Why Choose Us"}
-          </span>
-          <h2 className="mt-3 font-heading text-3xl font-bold text-foreground md:text-4xl">
-            {language === "fr" ? "L'Excellence Immobilière" : language === "ar" ? "التميز العقاري" : "Real Estate Excellence"}
-          </h2>
-          <div className="mx-auto mt-4 gold-line" />
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-3">
-          {features.map((f, i) => (
-            <div
-              key={i}
-              className="premium-card p-8 text-center group"
-            >
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 transition-all duration-500 group-hover:bg-primary/20 group-hover:scale-110">
-                <f.icon className="h-8 w-8 text-primary transition-transform duration-500 group-hover:scale-110" />
-              </div>
-              <h3 className="mt-6 font-heading text-xl font-semibold text-card-foreground">{t(f.titleKey)}</h3>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{t(f.descKey)}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Featured Properties */}
-      <section className="relative overflow-hidden pb-24 md:pb-32">
-        {/* Subtle background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/30 to-background" />
-
-        <div className="container relative z-10">
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-widest text-gold font-display">
-                {language === "fr" ? "Collection Exclusive" : language === "ar" ? "مجموعة حصرية" : "Exclusive Collection"}
-              </span>
-              <h2 className="mt-2 font-heading text-3xl font-bold text-foreground md:text-4xl">{t("home.featured")}</h2>
-            </div>
-            <Button asChild variant="outline" className="group rounded-full border-primary/20 hover:border-primary/40">
-              <Link to="/listings" className="flex items-center gap-2">
-                {t("home.viewAll")}
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="mx-auto mt-4 gold-line md:mx-0" />
-
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {featured.map((p, i) => (
-              <div key={p.id} className="animate-fade-in-up" style={{ animationDelay: `${i * 0.1}s` }}>
-                <PropertyCard property={p} />
+      <SectionShell tone="muted">
+        <div className="container">
+          <SectionHeading
+            eyebrow={t("home.whyEyebrow")}
+            title={t("home.whyTitle")}
+            subtitle={t("home.whySubtitle")}
+          />
+          <div className="grid gap-6 md:grid-cols-3">
+            {features.map((f, i) => (
+              <div key={i} className="luminous-card-quiet p-8 md:p-10">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <f.icon className="h-6 w-6" />
+                </div>
+                <h3 className="mt-6 font-heading text-xl font-semibold tracking-[-0.02em]">
+                  {t(f.titleKey)}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-on-surface-variant">
+                  {t(f.descKey)}
+                </p>
               </div>
             ))}
           </div>
         </div>
-      </section>
+      </SectionShell>
 
-      {/* CTA Banner */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-foreground via-navy-light to-foreground dark:from-card dark:via-navy-light/30 dark:to-card" />
-        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
-        <div className="container relative z-10 py-20 text-center">
-          <h2 className="font-heading text-3xl font-bold text-primary-foreground md:text-4xl">
-            {language === "fr" ? "Prêt à Trouver Votre Maison de Rêve ?" : language === "ar" ? "هل أنت مستعد للعثور على منزل أحلامك؟" : "Ready to Find Your Dream Home?"}
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-primary-foreground/70">
-            {language === "fr" ? "Contactez nos experts dès aujourd'hui" : language === "ar" ? "تواصل مع خبرائنا اليوم" : "Get in touch with our experts today"}
-          </p>
-          <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Button asChild size="lg" className="gradient-cta-gold rounded-full px-8 text-base">
-              <Link to="/contact">{t("nav.contact")}</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="rounded-full border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 px-8 text-base">
-              <Link to="/listings">{t("nav.listings")}</Link>
+      <SectionShell>
+        <div className="container">
+          <SectionHeading
+            eyebrow={t("home.featuredEyebrow")}
+            title={t("home.featured")}
+            subtitle={t("home.featuredSubtitle")}
+            action={
+              <Button
+                asChild
+                variant="outline"
+                className="hidden rounded-full border-outline-variant/40 md:inline-flex"
+              >
+                <Link to="/listings" className="gap-2">
+                  {t("home.viewAll")}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            }
+          />
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {isError ? (
+              <div className="col-span-full">
+                <ApiErrorState
+                  title={t("toast.error")}
+                  description={getQueryErrorDescription(error, t)}
+                  onRetry={() => void refetch()}
+                  retryLabel={t("common.retry")}
+                />
+              </div>
+            ) : isLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="aspect-[4/5] animate-pulse rounded-3xl bg-muted" />
+              ))
+            ) : featured.length === 0 ? (
+              <p className="col-span-full text-center text-sm text-muted-foreground">
+                {language === "fr"
+                  ? "Aucune propriété mise en avant pour le moment."
+                  : language === "ar"
+                    ? "لا توجد عقارات مميزة حالياً."
+                    : "No featured listings yet."}
+              </p>
+            ) : (
+              featured.slice(0, 6).map((p) => <PropertyCard key={p.id} property={p} />)
+            )}
+          </div>
+          <div className="mt-10 flex justify-center md:hidden">
+            <Button asChild variant="outline" className="rounded-full border-outline-variant/40">
+              <Link to="/listings">{t("home.viewAll")}</Link>
             </Button>
           </div>
         </div>
-      </section>
+      </SectionShell>
+
+      <SectionShell tone="muted">
+        <div className="container">
+          <SectionHeading
+            eyebrow={t("home.citiesEyebrow")}
+            title={t("home.citiesTitle")}
+            subtitle={t("home.citiesSubtitle")}
+          />
+          <div className="grid gap-4 md:grid-cols-3">
+            {cities.map((c) => (
+              <Link
+                key={c.slug}
+                to={`/listings?city=${c.slug}`}
+                className="group flex items-center justify-between rounded-3xl bg-card px-6 py-6 shadow-[var(--shadow-ambient)] ring-1 ring-outline-variant/20 transition hover:-translate-y-0.5"
+              >
+                <span className="flex items-center gap-3 font-heading text-lg font-semibold tracking-[-0.02em]">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-surface-container text-primary">
+                    <MapPin className="h-5 w-5" />
+                  </span>
+                  {t(c.key)}
+                </span>
+                <ArrowRight className="h-5 w-5 text-on-surface-variant transition group-hover:translate-x-1 group-hover:text-primary" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </SectionShell>
+
+      <SectionShell>
+        <div className="container">
+          <div className="rounded-3xl bg-gradient-to-br from-[#0a1633] via-[#0d2a6e] to-[#1d4ed8] px-8 py-14 text-center text-primary-foreground shadow-[var(--shadow-ambient)] md:px-16 md:py-20">
+            <h2 className="font-heading text-3xl font-bold tracking-[-0.02em] md:text-4xl">
+              {t("home.ctaTitle")}
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-base text-white/80">{t("home.ctaSubtitle")}</p>
+            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Button asChild size="lg" className="rounded-full px-10 font-semibold luminous-cta">
+                <Link to="/contact">{t("nav.contact")}</Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="rounded-full border-white/30 bg-white/10 text-white hover:bg-white/15"
+              >
+                <Link to="/listings">{t("nav.listings")}</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </SectionShell>
     </div>
   );
 };

@@ -9,6 +9,10 @@ lerna-debug.log*
 
 node_modules
 dist
+.env
+.env.*
+!.env.example
+
 dist-ssr
 .output
 .vinxi
@@ -30,3 +34,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# PostgreSQL local (pg_ctl, hors service Windows)
+.postgres-data/
+postgres-local.log
+.postgres-superuser-pw.tmp
+
+# Uploads admin (stockage disque local)
+backend/data/uploads/

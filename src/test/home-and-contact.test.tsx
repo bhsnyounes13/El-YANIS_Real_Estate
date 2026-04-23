@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import Index from "@/pages/Index";
 import Contact from "@/pages/Contact";
+import { TestProviders } from "@/test/test-utils";
 
 function SearchParamsEcho() {
   const location = useLocation();
@@ -17,19 +18,29 @@ describe("home and contact regressions", () => {
     document.documentElement.lang = "en";
   });
 
-  it("keeps index search navigation query behavior", () => {
+  it("keeps index search navigation query behavior", async () => {
     render(
-      <LanguageProvider>
-        <MemoryRouter initialEntries={["/"]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/listings" element={<SearchParamsEcho />} />
-          </Routes>
-        </MemoryRouter>
-      </LanguageProvider>,
+      <TestProviders>
+        <LanguageProvider>
+          <MemoryRouter
+            initialEntries={["/"]}
+            future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+          >
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/listings" element={<SearchParamsEcho />} />
+            </Routes>
+          </MemoryRouter>
+        </LanguageProvider>
+      </TestProviders>,
     );
 
-    fireEvent.change(screen.getByPlaceholderText("Search properties..."), { target: { value: "villa" } });
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText("Search properties...")).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByPlaceholderText("Search properties..."), {
+      target: { value: "villa" },
+    });
     const filters = screen.getAllByRole("combobox");
     fireEvent.change(filters[0], { target: { value: "sale" } });
     fireEvent.change(filters[1], { target: { value: "tlemcen" } });
@@ -38,29 +49,36 @@ describe("home and contact regressions", () => {
     expect(screen.getByText("?q=villa&type=sale&city=tlemcen")).toBeInTheDocument();
   });
 
-  it("resets contact form after submit", () => {
+  it("resets contact form after submit", async () => {
     render(
-      <LanguageProvider>
-        <MemoryRouter initialEntries={["/contact"]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <Contact />
-        </MemoryRouter>
-      </LanguageProvider>,
+      <TestProviders>
+        <LanguageProvider>
+          <MemoryRouter
+            initialEntries={["/contact"]}
+            future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+          >
+            <Contact />
+          </MemoryRouter>
+        </LanguageProvider>
+      </TestProviders>,
     );
 
-    const nameInput = screen.getByPlaceholderText("Your Name") as HTMLInputElement;
-    const emailInput = screen.getByPlaceholderText("Your Email") as HTMLInputElement;
-    const subjectInput = screen.getByPlaceholderText("Subject") as HTMLInputElement;
-    const messageInput = screen.getByPlaceholderText("Your Message") as HTMLTextAreaElement;
+    const nameInput = screen.getByLabelText("Your Name") as HTMLInputElement;
+    const emailInput = screen.getByLabelText("Your Email") as HTMLInputElement;
+    const subjectInput = screen.getByLabelText("Subject") as HTMLInputElement;
+    const messageInput = screen.getByLabelText("Message") as HTMLTextAreaElement;
 
     fireEvent.change(nameInput, { target: { value: "Alice" } });
     fireEvent.change(emailInput, { target: { value: "alice@example.com" } });
     fireEvent.change(subjectInput, { target: { value: "Question" } });
     fireEvent.change(messageInput, { target: { value: "Hello there" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send Message" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
-    expect(nameInput.value).toBe("");
-    expect(emailInput.value).toBe("");
-    expect(subjectInput.value).toBe("");
-    expect(messageInput.value).toBe("");
+    await waitFor(() => {
+      expect(nameInput.value).toBe("");
+      expect(emailInput.value).toBe("");
+      expect(subjectInput.value).toBe("");
+      expect(messageInput.value).toBe("");
+    });
   });
 });

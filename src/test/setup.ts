@@ -1,4 +1,7 @@
 import "@testing-library/jest-dom";
+import { installApiFetchMock } from "./installApiFetchMock";
+
+installApiFetchMock();
 
 Object.defineProperty(window, "matchMedia", {
   writable: true,

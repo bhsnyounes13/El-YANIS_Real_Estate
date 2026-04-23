@@ -1,21 +1,26 @@
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
+  const { t } = useLanguage();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>
-        <a href="/" className="text-primary underline hover:text-primary/90">
-          Return to Home
-        </a>
+    <div className="flex min-h-[70vh] flex-col items-center justify-center bg-surface-container/50 px-6 py-20 text-center">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-on-surface-variant">
+        {t("notfound.label")}
+      </p>
+      <h1 className="mt-4 font-heading text-6xl font-bold tracking-[-0.04em] text-primary md:text-7xl">
+        404
+      </h1>
+      <p className="mt-4 max-w-md text-lg text-on-surface-variant">{t("notfound.message")}</p>
+      <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+        <Button asChild className="rounded-full px-8 font-semibold luminous-cta">
+          <Link to="/">{t("notfound.home")}</Link>
+        </Button>
+        <Button asChild variant="outline" className="rounded-full border-outline-variant/40 px-8">
+          <Link to="/listings">{t("notfound.listings")}</Link>
+        </Button>
       </div>
     </div>
   );

@@ -1,30 +1,64 @@
 import { useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { properties, agents } from "@/data/mockData";
-import LazyImage from "@/components/LazyImage";
+import { PropertyGallery } from "@/components/PropertyGallery";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import {
-  ArrowLeft, ArrowRight, ChevronLeft, MapPin,
-  BedDouble, Bath, Maximize, Check, Phone, Mail, Send, CalendarDays,
+  ChevronLeft,
+  MapPin,
+  BedDouble,
+  Bath,
+  Maximize,
+  Check,
+  Phone,
+  Mail,
+  Send,
+  CalendarDays,
 } from "lucide-react";
+import { ApiErrorState } from "@/components/ApiErrorState";
 import { useToast } from "@/hooks/use-toast";
+import { useProperty } from "@/hooks/queries/useProperty";
+import { useAgents } from "@/hooks/queries/useAgents";
+import { usePropertyInquiry } from "@/hooks/mutations/usePropertyInquiry";
+import { TurnstileField } from "@/components/security/TurnstileField";
+import { useTurnstileSubmissionGate } from "@/hooks/useTurnstileSubmissionGate";
+import {
+  propertyInquiryPageSchema,
+  type PropertyInquiryPageValues,
+} from "@/lib/forms/publicFormSchemas";
+import { getMutationErrorDescription, getQueryErrorDescription } from "@/lib/api/mapApiUserMessage";
 
 const PropertyDetail = () => {
   const { id } = useParams();
   const { language, t } = useLanguage();
   const { toast } = useToast();
-  const [currentImage, setCurrentImage] = useState(0);
-  const [formData, setFormData] = useState({ name: "", email: "", phone: "", message: "" });
+  const { data: property, isLoading, isError, error, refetch } = useProperty(id);
+  const { data: agents = [] } = useAgents();
+  const inquiry = usePropertyInquiry();
+  const { turnstileToken, setTurnstileToken, turnstileRequired, canSubmitWithTurnstile } =
+    useTurnstileSubmissionGate();
+
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
-  const property = properties.find((p) => p.id === id);
+  const form = useForm<PropertyInquiryPageValues>({
+    resolver: zodResolver(propertyInquiryPageSchema),
+    defaultValues: { name: "", email: "", phone: "", message: "" },
+  });
 
-  // Compute booked date ranges for the calendar (must be before early return)
   const bookedRanges = useMemo(() => {
     if (!property?.bookedDates) return [];
     return property.bookedDates.map((r) => ({
@@ -43,12 +77,35 @@ const PropertyDetail = () => {
   };
 
   const isSelectedBooked = selectedDate ? isDateBooked(selectedDate) : false;
+  const isRent = property?.type === "rent";
+
+  if (isLoading) {
+    return (
+      <div className="container py-16">
+        <div className="h-8 w-40 animate-pulse rounded bg-muted" />
+        <div className="mt-8 aspect-[21/9] animate-pulse rounded-3xl bg-muted" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="container py-16">
+        <ApiErrorState
+          title={t("toast.error")}
+          description={getQueryErrorDescription(error, t)}
+          onRetry={() => void refetch()}
+          retryLabel={t("common.retry")}
+        />
+      </div>
+    );
+  }
 
   if (!property) {
     return (
       <div className="container py-24 text-center">
-        <p className="text-xl text-muted-foreground">{t("detail.notFound")}</p>
-        <Button asChild variant="outline" className="mt-6 rounded-full">
+        <p className="text-lg text-muted-foreground">{t("detail.notFound")}</p>
+        <Button asChild variant="outline" className="mt-8 rounded-full">
           <Link to="/listings">{t("detail.back")}</Link>
         </Button>
       </div>
@@ -61,109 +118,135 @@ const PropertyDetail = () => {
   const agentBio = agent ? (agent[`bio_${language}` as keyof typeof agent] as string) : "";
 
   const formatPrice = (price: number) =>
-    new Intl.NumberFormat(language === "ar" ? "ar-DZ" : language === "fr" ? "fr-DZ" : "en-US").format(price);
+    new Intl.NumberFormat(
+      language === "ar" ? "ar-DZ" : language === "fr" ? "fr-DZ" : "en-US",
+    ).format(price);
 
-  const prevImage = () => setCurrentImage((i) => (i === 0 ? property.images.length - 1 : i - 1));
-  const nextImage = () => setCurrentImage((i) => (i === property.images.length - 1 ? 0 : i + 1));
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast({ title: "Message sent!", description: "The agent will contact you shortly." });
-    setFormData({ name: "", email: "", phone: "", message: "" });
+  const onSubmit = (values: PropertyInquiryPageValues) => {
+    inquiry.mutate(
+      {
+        name: values.name.trim(),
+        email: values.email.trim(),
+        phone: values.phone?.trim() || undefined,
+        message: values.message.trim(),
+        propertyId: property.id,
+        preferredDate: selectedDate?.toISOString(),
+        turnstileToken,
+      },
+      {
+        onSuccess: () => {
+          toast({ title: t("toast.inquirySent"), description: t("toast.inquirySentDesc") });
+          form.reset();
+          setTurnstileToken(null);
+        },
+        onError: (err) =>
+          toast({
+            title: t("toast.error"),
+            description: getMutationErrorDescription(err, t),
+            variant: "destructive",
+          }),
+      },
+    );
   };
 
   return (
-    <div className="container py-10">
-      <Link to="/listings" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8 group">
-        <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> {t("detail.back")}
+    <div className="container py-10 md:py-14" data-rent-context={isRent ? "true" : undefined}>
+      <Link
+        to="/listings"
+        className="inline-flex items-center gap-2 text-sm text-on-surface-variant transition-colors hover:text-foreground"
+      >
+        <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
+        {t("detail.back")}
       </Link>
 
-      <div className="flex flex-col gap-10 lg:flex-row">
-        {/* Main content */}
-        <div className="flex-1">
-          {/* Carousel */}
-          <div className="relative overflow-hidden rounded-2xl">
-            <LazyImage
-              src={property.images[currentImage]}
-              alt={title}
-              className="aspect-[16/10] w-full"
-            />
-            {property.images.length > 1 && (
-              <>
-                <button onClick={prevImage} className="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full glass-effect-strong hover:scale-105 transition-transform">
-                  <ArrowLeft className="h-4 w-4" />
-                </button>
-                <button onClick={nextImage} className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full glass-effect-strong hover:scale-105 transition-transform">
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-                  {property.images.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentImage(i)}
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        i === currentImage ? "w-6 bg-primary-foreground" : "w-2 bg-primary-foreground/40 hover:bg-primary-foreground/60"
-                      }`}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+      <div className="mt-8 flex flex-col gap-12 lg:flex-row lg:gap-14">
+        <div className="min-w-0 flex-1 space-y-10">
+          <PropertyGallery images={property.images} title={title} />
 
-          {/* Info */}
-          <div className="mt-8">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className={property.type === "sale" ? "premium-badge" : "rent-badge"}>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                  isRent ? "bg-rent-primary text-white" : "bg-primary text-primary-foreground"
+                }`}
+              >
                 {t(`type.${property.type}`)}
               </span>
-              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4 text-gold" /> {t(`city.${property.city}`)}
+              <span className="inline-flex items-center gap-1.5 text-sm text-on-surface-variant">
+                <MapPin className={`h-4 w-4 ${isRent ? "text-rent-primary" : "text-primary"}`} />
+                {t(`city.${property.city}`)}
               </span>
             </div>
 
-            <h1 className="mt-4 font-heading text-3xl font-bold text-foreground md:text-4xl">{title}</h1>
+            <h1 className="mt-5 font-heading text-3xl font-bold tracking-[-0.02em] text-foreground md:text-4xl lg:text-[2.75rem]">
+              {title}
+            </h1>
 
-            <div className="mt-3 flex items-baseline gap-2">
-              <span className="font-display text-3xl font-bold text-gradient">
+            <div className="mt-4 flex flex-wrap items-baseline gap-2">
+              <span
+                className={`font-heading text-3xl font-bold tracking-[-0.02em] md:text-4xl ${
+                  isRent ? "text-rent-primary" : "text-primary"
+                }`}
+              >
                 {formatPrice(property.price)} {t("property.dzd")}
               </span>
-              {property.type === "rent" && (
-                <span className="text-base text-muted-foreground">/{language === "fr" ? "mois" : language === "ar" ? "شهر" : "mo"}</span>
+              {isRent && (
+                <span className="text-base text-on-surface-variant">
+                  /{language === "fr" ? "mois" : language === "ar" ? "شهر" : "mo"}
+                </span>
               )}
             </div>
 
-            {/* Stats cards */}
-            <div className="mt-6 grid grid-cols-3 gap-3">
+            <div className="mt-8 grid grid-cols-3 gap-3">
               {[
                 { icon: BedDouble, value: property.bedrooms, label: t("property.beds") },
                 { icon: Bath, value: property.bathrooms, label: t("property.baths") },
                 { icon: Maximize, value: `${property.area}`, label: t("property.area") },
               ].map((stat, i) => (
-                <div key={i} className="premium-card p-4 text-center">
-                  <stat.icon className="mx-auto h-5 w-5 text-primary" />
-                  <div className="mt-2 text-lg font-bold text-card-foreground font-display">{stat.value}</div>
-                  <div className="text-xs text-muted-foreground">{stat.label}</div>
+                <div
+                  key={i}
+                  className="rounded-3xl bg-surface-container px-3 py-4 text-center ring-1 ring-outline-variant/25"
+                >
+                  <stat.icon
+                    className={`mx-auto h-5 w-5 ${isRent ? "text-rent-primary" : "text-primary"}`}
+                  />
+                  <div className="mt-2 font-heading text-xl font-bold text-foreground">
+                    {stat.value}
+                  </div>
+                  <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-on-surface-variant">
+                    {stat.label}
+                  </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-10">
-              <h2 className="font-heading text-2xl font-semibold text-foreground">{t("detail.description")}</h2>
-              <div className="mt-2 gold-line" />
-              <p className="mt-4 text-muted-foreground leading-relaxed text-[15px]">{description}</p>
+            <div className="mt-12 space-y-4">
+              <h2 className="font-heading text-2xl font-semibold tracking-[-0.02em]">
+                {t("detail.description")}
+              </h2>
+              <p className="max-w-3xl text-[15px] leading-relaxed text-on-surface-variant">
+                {description}
+              </p>
             </div>
 
-            <div className="mt-10">
-              <h2 className="font-heading text-2xl font-semibold text-foreground">{t("detail.amenities")}</h2>
-              <div className="mt-2 gold-line" />
-              <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-12">
+              <h2 className="font-heading text-2xl font-semibold tracking-[-0.02em]">
+                {t("detail.amenities")}
+              </h2>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 {property.amenities.map((amenity) => (
-                  <div key={amenity} className="flex items-center gap-2.5 rounded-xl bg-muted/50 px-4 py-3 text-sm">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
-                      <Check className="h-3.5 w-3.5 text-primary" />
-                    </div>
-                    <span className="text-foreground">{amenity}</span>
+                  <div
+                    key={amenity}
+                    className="flex items-center gap-3 rounded-2xl bg-surface-container px-4 py-3 text-sm text-foreground"
+                  >
+                    <span
+                      className={`flex h-8 w-8 items-center justify-center rounded-xl ${
+                        isRent ? "bg-rent-soft text-rent-primary" : "bg-primary/10 text-primary"
+                      }`}
+                    >
+                      <Check className="h-4 w-4" />
+                    </span>
+                    {amenity}
                   </div>
                 ))}
               </div>
@@ -171,16 +254,13 @@ const PropertyDetail = () => {
           </div>
         </div>
 
-        {/* Sidebar */}
-        <aside className="w-full lg:w-80 shrink-0">
-          <div className="sticky top-24 space-y-6">
-
-            {/* Availability Calendar — only for rent */}
-            {property.type === "rent" && (
-              <div className="premium-card p-6">
-                <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-gold font-display">
-                  <CalendarDays className="h-3.5 w-3.5" />
-                  {language === "fr" ? "Vérifier la Disponibilité" : language === "ar" ? "تحقق من التوفر" : "Check Availability"}
+        <aside className="w-full shrink-0 lg:w-[380px]">
+          <div className="flex flex-col gap-6 lg:sticky lg:top-28">
+            {isRent && (
+              <div className="rounded-3xl bg-rent-soft p-6 ring-1 ring-rent-secondary/35">
+                <h3 className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-rent-primary">
+                  <CalendarDays className="h-4 w-4" />
+                  {t("detail.availability")}
                 </h3>
                 <div className="mt-4 flex justify-center">
                   <Calendar
@@ -188,105 +268,156 @@ const PropertyDetail = () => {
                     selected={selectedDate}
                     onSelect={setSelectedDate}
                     disabled={(date) => date < new Date()}
-                    modifiers={{
-                      booked: (date) => isDateBooked(date),
-                    }}
+                    modifiers={{ booked: (date) => isDateBooked(date) }}
                     modifiersClassNames={{
                       booked: "!bg-destructive/15 !text-destructive line-through",
                     }}
-                    className={cn("p-3 pointer-events-auto rounded-xl border-0")}
+                    className={cn("pointer-events-auto rounded-2xl border-0 p-3")}
                   />
                 </div>
-
-                {/* Legend */}
-                <div className="mt-3 flex items-center justify-center gap-4 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-3 w-3 rounded-sm bg-primary/20 border border-primary/30" />
-                    {language === "fr" ? "Disponible" : language === "ar" ? "متاح" : "Available"}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-3 w-3 rounded-sm bg-destructive/15 border border-destructive/30" />
-                    {language === "fr" ? "Réservé" : language === "ar" ? "محجوز" : "Booked"}
-                  </span>
-                </div>
-
-                {/* Selected date status */}
                 {selectedDate && (
-                  <div className={cn(
-                    "mt-4 rounded-xl px-4 py-3 text-center text-sm font-medium",
-                    isSelectedBooked
-                      ? "bg-destructive/10 text-destructive"
-                      : "bg-primary/10 text-primary"
-                  )}>
-                    {isSelectedBooked
-                      ? (language === "fr" ? "❌ Cette date est réservée" : language === "ar" ? "❌ هذا التاريخ محجوز" : "❌ This date is booked")
-                      : (language === "fr" ? "✅ Cette date est disponible !" : language === "ar" ? "✅ هذا التاريخ متاح!" : "✅ This date is available!")}
+                  <div
+                    className={cn(
+                      "mt-4 rounded-2xl px-4 py-3 text-center text-sm font-medium",
+                      isSelectedBooked
+                        ? "bg-destructive/10 text-destructive"
+                        : "bg-primary/10 text-primary",
+                    )}
+                  >
+                    {isSelectedBooked ? t("detail.dateBooked") : t("detail.dateFree")}
                   </div>
                 )}
               </div>
             )}
 
-            {/* Agent card */}
             {agent && (
-              <div className="premium-card p-6">
-                <h3 className="text-xs font-semibold uppercase tracking-widest text-gold font-display">{t("detail.contactAgent")}</h3>
+              <div className="rounded-3xl bg-card p-6 shadow-[var(--shadow-ambient)] ring-1 ring-outline-variant/20">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-on-surface-variant">
+                  {t("detail.contactAgent")}
+                </h3>
                 <div className="mt-4 flex items-center gap-3">
-                  <img src={agent.photo} alt={agent.name} className="h-14 w-14 rounded-2xl object-cover ring-2 ring-primary/10" />
+                  <img
+                    src={agent.photo}
+                    alt=""
+                    className="h-14 w-14 rounded-2xl object-cover ring-1 ring-outline-variant/30"
+                  />
                   <div>
-                    <p className="font-display font-semibold text-card-foreground">{agent.name}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{agentBio}</p>
+                    <p className="font-heading font-semibold text-foreground">{agent.name}</p>
+                    <p className="mt-0.5 line-clamp-2 text-xs text-on-surface-variant">
+                      {agentBio}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-5 flex flex-col gap-2">
-                  <a href={`tel:${agent.phone}`} className="flex items-center gap-2.5 rounded-xl bg-muted/50 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors">
+                  <a
+                    href={`tel:${agent.phone}`}
+                    className="flex items-center gap-2 rounded-2xl bg-surface-container px-4 py-2.5 text-sm transition hover:bg-muted"
+                  >
                     <Phone className="h-4 w-4 text-primary" /> {agent.phone}
                   </a>
-                  <a href={`mailto:${agent.email}`} className="flex items-center gap-2.5 rounded-xl bg-muted/50 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors">
+                  <a
+                    href={`mailto:${agent.email}`}
+                    className="flex items-center gap-2 rounded-2xl bg-surface-container px-4 py-2.5 text-sm transition hover:bg-muted"
+                  >
                     <Mail className="h-4 w-4 text-primary" /> {agent.email}
                   </a>
                 </div>
               </div>
             )}
 
-            {/* Inquiry form */}
-            <div className="premium-card p-6">
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-gold font-display">{t("detail.inquiry")}</h3>
-              <form onSubmit={handleSubmit} className="mt-5 space-y-3">
-                <Input
-                  placeholder={t("detail.name")}
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  className="h-11 rounded-xl"
-                />
-                <Input
-                  type="email"
-                  placeholder={t("detail.email")}
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                  className="h-11 rounded-xl"
-                />
-                <Input
-                  type="tel"
-                  placeholder={t("detail.phone")}
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="h-11 rounded-xl"
-                />
-                <Textarea
-                  placeholder={t("detail.message")}
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  rows={4}
-                  required
-                  className="rounded-xl resize-none"
-                />
-                <Button type="submit" className="w-full gradient-cta h-11 rounded-xl gap-2">
-                  <Send className="h-4 w-4" />
-                  {t("detail.send")}
-                </Button>
-              </form>
+            <div className="rounded-3xl bg-card p-6 shadow-[var(--shadow-ambient)] ring-1 ring-outline-variant/20">
+              <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-on-surface-variant">
+                {t("detail.inquiry")}
+              </h3>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="mt-5 space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="sr-only">{t("detail.name")}</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder={t("detail.name")}
+                            className="luminous-input h-11 rounded-2xl"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="sr-only">{t("detail.email")}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder={t("detail.email")}
+                            className="luminous-input h-11 rounded-2xl"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="sr-only">{t("detail.phone")}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="tel"
+                            placeholder={t("detail.phone")}
+                            className="luminous-input h-11 rounded-2xl"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="message"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="sr-only">{t("detail.message")}</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder={t("detail.message")}
+                            rows={4}
+                            className="luminous-input rounded-2xl"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <TurnstileField onTokenChange={setTurnstileToken} />
+                  <Button
+                    type="submit"
+                    disabled={inquiry.isPending || !canSubmitWithTurnstile}
+                    title={
+                      turnstileRequired && !canSubmitWithTurnstile
+                        ? t("security.completeCaptcha")
+                        : undefined
+                    }
+                    className={`h-11 w-full rounded-2xl font-semibold ${isRent ? "luminous-cta-rent" : "luminous-cta"}`}
+                  >
+                    <Send className="me-2 h-4 w-4" />
+                    {t("detail.send")}
+                  </Button>
+                </form>
+              </Form>
             </div>
           </div>
         </aside>

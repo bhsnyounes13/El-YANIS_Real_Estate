@@ -1,79 +1,124 @@
+import { Link } from "react-router-dom";
+import { ApiErrorState } from "@/components/ApiErrorState";
+import { getQueryErrorDescription } from "@/lib/api/mapApiUserMessage";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { agents } from "@/data/mockData";
+import { PageHero } from "@/components/PageHero";
+import { SectionShell } from "@/components/SectionShell";
+import { Button } from "@/components/ui/button";
+import { useAgents } from "@/hooks/queries/useAgents";
 import { Phone, Mail, Star } from "lucide-react";
 
 const Agents = () => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
+  const { data: agents = [], isLoading, isError, error, refetch } = useAgents();
 
   return (
     <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-foreground via-navy-light to-foreground dark:from-background dark:via-navy-light/20 dark:to-background" />
-        <div className="absolute bottom-10 right-1/4 w-72 h-72 rounded-full bg-gold/15 blur-[100px] animate-pulse-soft" />
-        <div className="container relative z-10 py-24 text-center">
-          <span className="text-xs font-semibold uppercase tracking-widest text-gold font-display">
-            {language === "fr" ? "Notre Équipe" : language === "ar" ? "فريقنا" : "Our Team"}
-          </span>
-          <h1 className="mt-3 font-heading text-4xl font-bold text-primary-foreground md:text-5xl">
-            {language === "fr" ? "Nos Agents Experts" : language === "ar" ? "وكلاؤنا الخبراء" : "Our Expert Agents"}
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-primary-foreground/70">
-            {language === "fr" ? "Des professionnels dévoués à votre réussite immobilière" : language === "ar" ? "محترفون مكرسون لنجاحك العقاري" : "Dedicated professionals committed to your real estate success"}
-          </p>
-          <div className="mx-auto mt-6 gold-line" />
-        </div>
-      </section>
+      <PageHero
+        eyebrow={language === "fr" ? "Confiance" : language === "ar" ? "الثقة" : "Trust"}
+        title={
+          language === "fr"
+            ? "Les conseillers EL-YANIS"
+            : language === "ar"
+              ? "مستشارو العنيس"
+              : "EL-YANIS advisors"
+        }
+        description={
+          language === "fr"
+            ? "Des profils seniors, ancrés dans l’ouest algérien, avec une approche calme et structurée."
+            : language === "ar"
+              ? "ملفات ذات خبرة في غرب الجزائر، بأسلوب هادئ ومنظم."
+              : "Senior profiles rooted in western Algeria, with a calm and structured approach."
+        }
+      />
 
-      {/* Agents Grid */}
-      <section className="container py-20">
-        <div className="grid gap-8 md:grid-cols-2 max-w-3xl mx-auto">
-          {agents.map((agent, i) => {
-            const bio = agent[`bio_${language}` as keyof typeof agent] as string;
-            return (
-              <div key={agent.id} className="premium-card p-8 text-center group animate-fade-in-up" style={{ animationDelay: `${i * 0.15}s` }}>
-                <img
-                  src={agent.photo}
-                  alt={agent.name}
-                  className="mx-auto h-28 w-28 rounded-2xl object-cover ring-4 ring-primary/10 transition-all duration-500 group-hover:ring-primary/25 group-hover:scale-105"
-                />
-                <h3 className="mt-5 font-heading text-xl font-semibold text-card-foreground">{agent.name}</h3>
-                <div className="mx-auto mt-2 gold-line" />
-                <div className="mt-3 flex items-center justify-center gap-1">
-                  {[...Array(5)].map((_, j) => (
-                    <Star key={j} className="h-3.5 w-3.5 fill-gold text-gold" />
-                  ))}
-                </div>
-                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{bio}</p>
-                <div className="mt-5 flex flex-col gap-2">
-                  <a href={`tel:${agent.phone}`} className="flex items-center justify-center gap-2 rounded-xl bg-muted/50 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors">
-                    <Phone className="h-4 w-4 text-primary" /> {agent.phone}
-                  </a>
-                  <a href={`mailto:${agent.email}`} className="flex items-center justify-center gap-2 rounded-xl bg-muted/50 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors">
-                    <Mail className="h-4 w-4 text-primary" /> {agent.email}
-                  </a>
-                </div>
-              </div>
-            );
-          })}
+      <SectionShell>
+        <div className="container">
+          {isError ? (
+            <ApiErrorState
+              title={t("toast.error")}
+              description={getQueryErrorDescription(error, t)}
+              onRetry={() => void refetch()}
+              retryLabel={t("common.retry")}
+            />
+          ) : isLoading ? (
+            <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
+              {[0, 1].map((i) => (
+                <div key={i} className="h-96 animate-pulse rounded-3xl bg-muted" />
+              ))}
+            </div>
+          ) : (
+            <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
+              {agents.map((agent) => {
+                const bio = agent[`bio_${language}` as keyof typeof agent] as string;
+                return (
+                  <div
+                    key={agent.id}
+                    className="luminous-card-quiet flex flex-col p-8 text-center md:p-10"
+                  >
+                    <img
+                      src={agent.photo}
+                      alt={agent.name}
+                      className="mx-auto h-28 w-28 rounded-3xl object-cover ring-1 ring-outline-variant/30"
+                    />
+                    <h3 className="mt-6 font-heading text-xl font-semibold tracking-[-0.02em]">
+                      {agent.name}
+                    </h3>
+                    <div className="mx-auto mt-3 flex gap-0.5">
+                      {[...Array(5)].map((_, j) => (
+                        <Star key={j} className="h-3.5 w-3.5 fill-primary/25 text-primary" />
+                      ))}
+                    </div>
+                    <p className="mt-4 text-sm leading-relaxed text-on-surface-variant">{bio}</p>
+                    <div className="mt-6 flex flex-col gap-2">
+                      <a
+                        href={`tel:${agent.phone}`}
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-surface-container px-4 py-2.5 text-sm transition hover:bg-muted"
+                      >
+                        <Phone className="h-4 w-4 text-primary" /> {agent.phone}
+                      </a>
+                      <a
+                        href={`mailto:${agent.email}`}
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-surface-container px-4 py-2.5 text-sm transition hover:bg-muted"
+                      >
+                        <Mail className="h-4 w-4 text-primary" /> {agent.email}
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-      </section>
+      </SectionShell>
 
-      {/* Join CTA */}
-      <section className="container pb-20">
-        <div className="premium-card p-10 text-center md:p-16">
-          <h2 className="font-heading text-3xl font-bold text-card-foreground">
-            {language === "fr" ? "Rejoignez Notre Équipe" : language === "ar" ? "انضم إلى فريقنا" : "Join Our Team"}
+      <SectionShell tone="muted">
+        <div className="container text-center">
+          <h2 className="font-heading text-3xl font-bold tracking-[-0.02em]">
+            {language === "fr"
+              ? "Rejoindre le réseau"
+              : language === "ar"
+                ? "انضم للشبكة"
+                : "Join the network"}
           </h2>
-          <p className="mx-auto mt-3 max-w-lg text-muted-foreground">
-            {language === "fr" ? "Nous recherchons des agents passionnés par l'immobilier" : language === "ar" ? "نبحث عن وكلاء شغوفين بالعقارات" : "We're looking for passionate real estate professionals"}
+          <p className="mx-auto mt-3 max-w-lg text-on-surface-variant">
+            {language === "fr"
+              ? "Nous accueillons les talents immobiliers partageant notre exigence éditoriale."
+              : language === "ar"
+                ? "نرحب بالمواهب التي تشاركنا نفس المستوى من الاحترافية."
+                : "We welcome real estate talent that shares our editorial standards."}
           </p>
-          <div className="mx-auto mt-4 gold-line" />
-          <a href="/contact" className="mt-8 inline-block rounded-full gradient-cta px-8 py-3 text-sm font-semibold">
-            {language === "fr" ? "Postuler" : language === "ar" ? "قدّم طلبك" : "Apply Now"}
-          </a>
+          <Button asChild className="mt-8 rounded-full px-10 font-semibold luminous-cta">
+            <Link to="/contact">
+              {language === "fr"
+                ? "Écrire au studio"
+                : language === "ar"
+                  ? "راسلنا"
+                  : "Write to us"}
+            </Link>
+          </Button>
         </div>
-      </section>
+      </SectionShell>
     </div>
   );
 };

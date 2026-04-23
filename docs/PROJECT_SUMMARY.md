@@ -3,6 +3,7 @@
 ## Goal
 
 The user is building a premium real estate SaaS platform called "EL-YANIS" with a dual-rental model (Long-Term Rentals + Short-Term/Airbnb-style Vacation Rentals). The goal was to:
+
 1. Analyze the existing codebase architecture
 2. Implement database schema upgrades for the dual-rental model
 3. Create a premium "Airbnb-style" BookingWidget component
@@ -19,6 +20,7 @@ The user is building a premium real estate SaaS platform called "EL-YANIS" with 
 ## Discoveries
 
 ### Frontend Stack Identified:
+
 - React 18 + TypeScript + Vite
 - Tailwind CSS 3
 - React Router DOM v7
@@ -29,6 +31,7 @@ The user is building a premium real estate SaaS platform called "EL-YANIS" with 
 - React Query (added for V2)
 
 ### Backend Already Existed:
+
 - Supabase with PostgreSQL database
 - Migrations for properties, agents, inquiries, appointments, bookings, availability
 - Profiles table for user roles (user/agent/admin)
@@ -36,6 +39,7 @@ The user is building a premium real estate SaaS platform called "EL-YANIS" with 
 - Edge Function for sending contact emails via Resend API
 
 ### Major Issues Found:
+
 1. **Two separate Supabase client instances** - one in `src/lib/supabase.ts` with auth config, one in `src/shared/lib/api.ts` without auth config
 2. **Dead API service layer** - `api.ts` defines propertyApi, agentApi but no component uses it
 3. **Dual/conflicting auth systems** - Supabase Auth + legacy localStorage auth that conflict
@@ -44,12 +48,14 @@ The user is building a premium real estate SaaS platform called "EL-YANIS" with 
 6. **No pagination** - All queries fetch all records
 
 ### V2 UI System Created:
+
 - New components: Button (with glow variant), Card, Input, AnimatedToggle (Rent/Sell), Skeleton, Toast, Modal
 - New pages: LandingPage (with animated Rent/Sell toggle), PropertiesPage, PropertyDetailsPage, DashboardPage, AuthPage
 - Navbar and Footer in new layout folder
 - Theme CSS with design tokens
 
 ### Documentation Created:
+
 - EL-YANIS-FULL-SPEC.md (comprehensive spec)
 - docs/ARCHITECTURE.md
 - docs/DESIGN_SYSTEM.md
@@ -76,6 +82,7 @@ The user is building a premium real estate SaaS platform called "EL-YANIS" with 
 ## Relevant Files / Directories
 
 ### Core Configuration:
+
 - `package.json` - dependencies including framer-motion, @tanstack/react-query, lucide-react, zustand, tailwind-merge, clsx
 - `vite.config.ts` - Vite configuration with path aliases
 - `tailwind.config.ts` - Tailwind configuration with design tokens
@@ -84,6 +91,7 @@ The user is building a premium real estate SaaS platform called "EL-YANIS" with 
 - `src/styles/globals.css` - Additional global styles
 
 ### Frontend Core:
+
 - `src/App.tsx` - Main app with V2 routing (LandingPage, PropertiesPage, PropertyDetailsPage, DashboardPage, AuthPage)
 - `src/main.tsx` - Entry point
 - `src/lib/supabase.ts` - Supabase client
@@ -91,6 +99,7 @@ The user is building a premium real estate SaaS platform called "EL-YANIS" with 
 - `src/stores/authStore.ts` - Zustand auth store
 
 ### V2 UI Components:
+
 - `src/components/ui/Button.tsx`
 - `src/components/ui/Card.tsx`
 - `src/components/ui/Input.tsx`
@@ -100,6 +109,7 @@ The user is building a premium real estate SaaS platform called "EL-YANIS" with 
 - `src/components/ui/Modal.tsx`
 
 ### V2 Pages:
+
 - `src/pages/LandingPage.tsx` - Hero with Rent/Sell toggle
 - `src/pages/PropertiesPage.tsx` - Property listings with filters
 - `src/pages/PropertyDetailsPage.tsx` - Property details with booking
@@ -107,14 +117,17 @@ The user is building a premium real estate SaaS platform called "EL-YANIS" with 
 - `src/pages/AuthPage.tsx` - Sign in/up with glassmorphism
 
 ### Layout:
+
 - `src/components/layout/Navbar.tsx`
 - `src/components/layout/Footer.tsx`
 
 ### Backend/Database:
+
 - `supabase/migrations/` - All SQL migrations including dual-rental model
 - `supabase/functions/send-contact-email/` - Edge function for emails
 
 ### Documentation:
+
 - `EL-YANIS-FULL-SPEC.md` - Comprehensive 19-section spec
 - `docs/ARCHITECTURE.md`
 - `docs/DESIGN_SYSTEM.md`
@@ -125,6 +138,7 @@ The user is building a premium real estate SaaS platform called "EL-YANIS" with 
 - `docs/UPDATED_SUMMARY.md`
 
 ### Remaining Original Files (not yet integrated):
+
 - `src/pages/Home.tsx` - Original home page
 - `src/pages/Listings.tsx` - Original listings
 - `src/contexts/` - LanguageContext, ThemeContext

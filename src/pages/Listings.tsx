@@ -1,16 +1,56 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { properties } from "@/data/mockData";
 import PropertyCard from "@/components/PropertyCard";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, SlidersHorizontal, X, Building2 } from "lucide-react";
+import { ListingFilters } from "@/components/ListingFilters";
+import { EmptyState } from "@/components/EmptyState";
+import { ApiErrorState } from "@/components/ApiErrorState";
+import { getQueryErrorDescription } from "@/lib/api/mapApiUserMessage";
+import { PageHero } from "@/components/PageHero";
+import { useProperties } from "@/hooks/queries/useProperties";
+import { Building2, SlidersHorizontal } from "lucide-react";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import type { Property } from "@/lib/domain/types";
+
+function filterProperties(
+  list: Property[],
+  keyword: string,
+  type: string,
+  city: string,
+  minPrice: string,
+  maxPrice: string,
+  bedrooms: string,
+  bathrooms: string,
+): Property[] {
+  return list.filter((p) => {
+    if (type && p.type !== type) return false;
+    if (city && p.city !== city) return false;
+    if (minPrice && p.price < Number(minPrice)) return false;
+    if (maxPrice && p.price > Number(maxPrice)) return false;
+    if (bedrooms && p.bedrooms < Number(bedrooms)) return false;
+    if (bathrooms && p.bathrooms < Number(bathrooms)) return false;
+    if (keyword) {
+      const q = keyword.toLowerCase();
+      const searchable =
+        `${p.title_en} ${p.title_fr} ${p.title_ar} ${p.description_en}`.toLowerCase();
+      if (!searchable.includes(q)) return false;
+    }
+    return true;
+  });
+}
 
 const Listings = () => {
   const { t, language } = useLanguage();
   const [searchParams] = useSearchParams();
-  const [showFilters, setShowFilters] = useState(false);
+  const { data: properties = [], isLoading, isError, error, refetch } = useProperties();
 
   const [keyword, setKeyword] = useState(searchParams.get("q") || "");
   const [type, setType] = useState(searchParams.get("type") || "");
@@ -20,168 +60,144 @@ const Listings = () => {
   const [bedrooms, setBedrooms] = useState("");
   const [bathrooms, setBathrooms] = useState("");
 
-  const filtered = useMemo(() => {
-    return properties.filter((p) => {
-      if (type && p.type !== type) return false;
-      if (city && p.city !== city) return false;
-      if (minPrice && p.price < Number(minPrice)) return false;
-      if (maxPrice && p.price > Number(maxPrice)) return false;
-      if (bedrooms && p.bedrooms < Number(bedrooms)) return false;
-      if (bathrooms && p.bathrooms < Number(bathrooms)) return false;
-      if (keyword) {
-        const q = keyword.toLowerCase();
-        const searchable = `${p.title_en} ${p.title_fr} ${p.title_ar} ${p.description_en}`.toLowerCase();
-        if (!searchable.includes(q)) return false;
-      }
-      return true;
-    });
-  }, [keyword, type, city, minPrice, maxPrice, bedrooms, bathrooms]);
+  const rentMode = type === "rent";
+
+  const filtered = useMemo(
+    () =>
+      filterProperties(properties, keyword, type, city, minPrice, maxPrice, bedrooms, bathrooms),
+    [properties, keyword, type, city, minPrice, maxPrice, bedrooms, bathrooms],
+  );
 
   const clearFilters = () => {
-    setKeyword(""); setType(""); setCity("");
-    setMinPrice(""); setMaxPrice(""); setBedrooms(""); setBathrooms("");
+    setKeyword("");
+    setType("");
+    setCity("");
+    setMinPrice("");
+    setMaxPrice("");
+    setBedrooms("");
+    setBathrooms("");
   };
 
-  const selectClass = "h-11 w-full rounded-xl border border-border bg-background px-4 text-sm text-foreground outline-none transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/30";
-
-  const FilterPanel = () => (
-    <div className="space-y-5">
-      <div className="relative">
-        <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder={t("hero.search")}
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          className="h-11 rounded-xl pl-10"
-        />
-      </div>
-
-      <div>
-        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-display">{t("type.all")}</label>
-        <select value={type} onChange={(e) => setType(e.target.value)} className={selectClass + " mt-1.5"}>
-          <option value="">{t("type.all")}</option>
-          <option value="sale">{t("type.sale")}</option>
-          <option value="rent">{t("type.rent")}</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-display">{t("city.all")}</label>
-        <select value={city} onChange={(e) => setCity(e.target.value)} className={selectClass + " mt-1.5"}>
-          <option value="">{t("city.all")}</option>
-          <option value="tlemcen">{t("city.tlemcen")}</option>
-          <option value="ainTemouchent">{t("city.ainTemouchent")}</option>
-          <option value="sidiBelAbbes">{t("city.sidiBelAbbes")}</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-display">{t("listings.price")}</label>
-        <div className="mt-1.5 flex gap-2">
-          <Input placeholder={t("listings.priceMin")} type="number" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} className="h-11 rounded-xl" />
-          <Input placeholder={t("listings.priceMax")} type="number" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} className="h-11 rounded-xl" />
-        </div>
-      </div>
-
-      <div>
-        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-display">{t("listings.bedrooms")}</label>
-        <select value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} className={selectClass + " mt-1.5"}>
-          <option value="">{t("listings.any")}</option>
-          <option value="1">1+</option>
-          <option value="2">2+</option>
-          <option value="3">3+</option>
-          <option value="4">4+</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-display">{t("listings.bathrooms")}</label>
-        <select value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} className={selectClass + " mt-1.5"}>
-          <option value="">{t("listings.any")}</option>
-          <option value="1">1+</option>
-          <option value="2">2+</option>
-          <option value="3">3+</option>
-        </select>
-      </div>
-
-      <Button variant="outline" className="w-full rounded-xl h-11" onClick={clearFilters}>
-        {t("listings.clear")}
-      </Button>
-    </div>
+  const filterPanel = (
+    <ListingFilters
+      t={t}
+      keyword={keyword}
+      setKeyword={setKeyword}
+      type={type}
+      setType={setType}
+      city={city}
+      setCity={setCity}
+      minPrice={minPrice}
+      setMinPrice={setMinPrice}
+      maxPrice={maxPrice}
+      setMaxPrice={setMaxPrice}
+      bedrooms={bedrooms}
+      setBedrooms={setBedrooms}
+      bathrooms={bathrooms}
+      setBathrooms={setBathrooms}
+      onClear={clearFilters}
+      rentMode={rentMode}
+    />
   );
 
   return (
-    <div className="container py-10">
-      {/* Header */}
-      <div className="flex items-end justify-between mb-8">
-        <div>
-          <span className="text-xs font-semibold uppercase tracking-widest text-gold font-display">
-            {language === "fr" ? "Explorer" : language === "ar" ? "اكتشف" : "Explore"}
-          </span>
-          <h1 className="mt-1 font-heading text-3xl font-bold text-foreground md:text-4xl">{t("listings.title")}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {filtered.length} {language === "fr" ? "propriétés trouvées" : language === "ar" ? "عقار" : "properties found"}
-          </p>
+    <div data-rent-context={rentMode ? "true" : undefined}>
+      <PageHero
+        variant="soft"
+        eyebrow={t("listings.heroEyebrow")}
+        title={t("listings.title")}
+        description={t("listings.heroDesc")}
+        align="left"
+      />
+
+      <div className="container py-12 md:py-16">
+        {isError ? (
+          <div className="mb-8">
+            <ApiErrorState
+              title={t("toast.error")}
+              description={getQueryErrorDescription(error, t)}
+              onRetry={() => void refetch()}
+              retryLabel={t("common.retry")}
+            />
+          </div>
+        ) : null}
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-sm text-on-surface-variant">
+              {isLoading || isError ? "…" : filtered.length}{" "}
+              {language === "fr" ? "résultats" : language === "ar" ? "نتيجة" : "results"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={`rounded-full border-outline-variant/40 ${rentMode ? "text-rent-primary border-rent-secondary/50" : ""}`}
+                >
+                  <SlidersHorizontal className="me-2 h-4 w-4" />
+                  {t("listings.filters")}
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side="bottom"
+                className="h-[85vh] overflow-y-auto rounded-t-3xl border-outline-variant/30"
+              >
+                <SheetHeader>
+                  <SheetTitle>{t("listings.filters")}</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6">{filterPanel}</div>
+                <SheetClose asChild>
+                  <Button
+                    type="button"
+                    className={`mt-6 w-full rounded-2xl font-semibold ${rentMode ? "luminous-cta-rent" : "luminous-cta"}`}
+                  >
+                    {t("listings.apply")}
+                  </Button>
+                </SheetClose>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
-        <Button
-          variant="outline"
-          className="md:hidden rounded-xl"
-          onClick={() => setShowFilters(!showFilters)}
-        >
-          <SlidersHorizontal className="mr-2 h-4 w-4" />
-          {t("listings.showFilters")}
-        </Button>
-      </div>
 
-      <div className="flex gap-8">
-        {/* Desktop sidebar */}
-        <aside className="hidden w-72 shrink-0 md:block">
-          <div className="sticky top-24 premium-card p-6">
-            <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-gold font-display mb-5">
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              {t("listings.filters")}
-            </h3>
-            <FilterPanel />
-          </div>
-        </aside>
-
-        {/* Mobile filter overlay */}
-        {showFilters && (
-          <div className="fixed inset-0 z-50 bg-background p-6 md:hidden overflow-y-auto animate-slide-in-right">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-heading text-xl font-bold">{t("listings.filters")}</h2>
-              <Button variant="ghost" size="icon" onClick={() => setShowFilters(false)}>
-                <X className="h-5 w-5" />
-              </Button>
+        <div className="flex gap-10">
+          <aside className="hidden w-80 shrink-0 lg:block">
+            <div
+              className={`sticky top-24 rounded-3xl p-6 shadow-[var(--shadow-ambient)] ${
+                rentMode
+                  ? "bg-rent-soft ring-1 ring-rent-secondary/30"
+                  : "bg-card ring-1 ring-outline-variant/20"
+              }`}
+            >
+              {filterPanel}
             </div>
-            <FilterPanel />
-            <Button className="mt-6 w-full gradient-cta h-12 rounded-xl" onClick={() => setShowFilters(false)}>
-              {t("hero.searchBtn")}
-            </Button>
-          </div>
-        )}
+          </aside>
 
-        {/* Property grid */}
-        <div className="flex-1">
-          {filtered.length === 0 ? (
-            <div className="flex flex-col items-center py-24 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
-                <Building2 className="h-8 w-8 text-muted-foreground" />
+          <div className="min-w-0 flex-1">
+            {isError ? null : isLoading ? (
+              <div className="grid gap-6 md:grid-cols-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="aspect-[4/5] animate-pulse rounded-3xl bg-muted" />
+                ))}
               </div>
-              <p className="text-lg font-medium text-foreground">{t("listings.noResults")}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {language === "fr" ? "Essayez d'ajuster vos filtres" : language === "ar" ? "حاول تعديل عوامل التصفية" : "Try adjusting your filters"}
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2">
-              {filtered.map((p, i) => (
-                <div key={p.id} className="animate-fade-in-up" style={{ animationDelay: `${i * 0.05}s` }}>
-                  <PropertyCard property={p} />
-                </div>
-              ))}
-            </div>
-          )}
+            ) : filtered.length === 0 ? (
+              <EmptyState
+                icon={Building2}
+                title={t("listings.noResults")}
+                description={t("listings.noResultsHint")}
+              >
+                <Button variant="outline" className="mt-6 rounded-full" onClick={clearFilters}>
+                  {t("listings.clear")}
+                </Button>
+              </EmptyState>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2">
+                {filtered.map((p) => (
+                  <PropertyCard key={p.id} property={p} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

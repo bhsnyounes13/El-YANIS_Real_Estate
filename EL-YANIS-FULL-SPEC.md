@@ -54,53 +54,19 @@ PWA:
 
 ```css
 /* Primary Brand — EL-YANIS Blue */
---blue-50:  #EFF6FF
---blue-100: #DBEAFE
---blue-500: #3B82F6
---blue-600: #2563EB    /* Primary button, links, accents */
---blue-700: #1D4ED8
---blue-800: #1E40AF
---blue-900: #1E3A8A
-
-/* Gradients */
---gradient-primary: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)
---gradient-hero:    linear-gradient(135deg, #2563EB 0%, #1D4ED8 50%, #0891B2 100%)
-
-/* Neutrals */
---gray-50:  #F9FAFB   /* Page background */
---gray-100: #F3F4F6
---gray-200: #E5E7EB   /* Borders, dividers */
---gray-300: #D1D5DB
---gray-400: #9CA3AF   /* Placeholder text */
---gray-500: #6B7280
---gray-600: #4B5563
---gray-700: #374151
---gray-800: #1F2937
---gray-900: #111827
-
-/* Text */
---text-primary:   #1A1A1A
---text-secondary: #717171
---text-disabled:  #D4D4D4
---text-white:     #FFFFFF
-
-/* Semantic */
---success:        #22C55E
---success-light:  #F0FDF4
---error:          #EF4444
---error-light:    #FEF2F2
---error-border:   #FECACA
---warning:        #F59E0B
---warning-light:  #FFFBEB
-
-/* Dark Mode */
---dark-bg:        #111827
---dark-surface:   #1F2937
---dark-card:      #1F2937
---dark-border:    #374151
---dark-input:     #374151
---dark-text:      #F9FAFB
---dark-text-muted:#9CA3AF
+--blue-50: #eff6ff --blue-100: #dbeafe --blue-500: #3b82f6 --blue-600: #2563eb
+  /* Primary button, links, accents */ --blue-700: #1d4ed8 --blue-800: #1e40af --blue-900: #1e3a8a
+  /* Gradients */ --gradient-primary: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)
+  --gradient-hero: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #0891b2 100%) /* Neutrals */
+  --gray-50: #f9fafb /* Page background */ --gray-100: #f3f4f6 --gray-200: #e5e7eb
+  /* Borders, dividers */ --gray-300: #d1d5db --gray-400: #9ca3af /* Placeholder text */
+  --gray-500: #6b7280 --gray-600: #4b5563 --gray-700: #374151 --gray-800: #1f2937
+  --gray-900: #111827 /* Text */ --text-primary: #1a1a1a --text-secondary: #717171
+  --text-disabled: #d4d4d4 --text-white: #ffffff /* Semantic */ --success: #22c55e
+  --success-light: #f0fdf4 --error: #ef4444 --error-light: #fef2f2 --error-border: #fecaca
+  --warning: #f59e0b --warning-light: #fffbeb /* Dark Mode */ --dark-bg: #111827
+  --dark-surface: #1f2937 --dark-card: #1f2937 --dark-border: #374151 --dark-input: #374151
+  --dark-text: #f9fafb --dark-text-muted: #9ca3af;
 ```
 
 ### 2.2 Typography
@@ -493,7 +459,7 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
-  role: 'user' | 'agent' | 'admin' | null;
+  role: "user" | "agent" | "admin" | null;
   isLoading: boolean;
   isInitialized: boolean;
 
@@ -644,22 +610,24 @@ CREATE POLICY "Admins can delete profiles"
 
 ```typescript
 // src/lib/supabase.ts
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  || import.meta.env.VITE_Bolt_Database_URL
-  || window._env?.VITE_SUPABASE_URL;
+const supabaseUrl =
+  import.meta.env.VITE_SUPABASE_URL ||
+  import.meta.env.VITE_Bolt_Database_URL ||
+  window._env?.VITE_SUPABASE_URL;
 
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-  || import.meta.env.VITE_Bolt_Database_ANON_KEY
-  || window._env?.VITE_SUPABASE_ANON_KEY;
+const supabaseAnonKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  import.meta.env.VITE_Bolt_Database_ANON_KEY ||
+  window._env?.VITE_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    flowType: 'pkce',
+    flowType: "pkce",
   },
 });
 ```
@@ -781,16 +749,20 @@ const { error } = await supabase
 const response = await fetch(
   `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-contact-email`,
   {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      name, email, phone, message,
-      propertyTitle, propertyId,
+      name,
+      email,
+      phone,
+      message,
+      propertyTitle,
+      propertyId,
     }),
-  }
+  },
 );
 ```
 
@@ -1370,14 +1342,14 @@ BookingWidget (PWA version):
 
 ```typescript
 // src/stores/authStore.ts
-import { create } from 'zustand';
-import { supabase } from '@/lib/supabase';
+import { create } from "zustand";
+import { supabase } from "@/lib/supabase";
 
 interface AuthState {
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
-  role: 'user' | 'agent' | 'admin' | null;
+  role: "user" | "agent" | "admin" | null;
   isLoading: boolean;
   isInitialized: boolean;
 
@@ -1397,14 +1369,16 @@ export const useAuthStore = create<AuthState>((set) => ({
   isInitialized: false,
 
   initialize: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (session) {
       set({ user: session.user, session });
       // Fetch profile
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', session.user.id)
+        .from("profiles")
+        .select("*")
+        .eq("user_id", session.user.id)
         .single();
       set({ profile, role: profile?.role || null });
     }
@@ -1413,8 +1387,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ user: session?.user ?? null, session: session ?? null });
       if (session) {
         // Refresh profile
-        supabase.from('profiles').select('*')
-          .eq('user_id', session.user.id).single()
+        supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .single()
           .then(({ data }) => set({ profile: data, role: data?.role || null }));
       } else {
         set({ profile: null, role: null });
@@ -1437,7 +1414,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { data: result, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
-      options: { data: { full_name: data.fullName, role: data.role || 'user' } },
+      options: { data: { full_name: data.fullName, role: data.role || "user" } },
     });
     set({ isLoading: false });
     if (error) return { success: false, error: error.message };
@@ -1541,13 +1518,13 @@ App component:
 
 ```typescript
 // supabase/functions/send-contact-email/index.ts
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { Resend } from 'npm:resend@2.0.0';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 serve(async (req) => {
-  if (req.method !== 'OPTIONS') {
+  if (req.method !== "OPTIONS") {
     try {
       const { name, email, phone, message, propertyTitle, propertyId } = await req.json();
 
@@ -1557,33 +1534,34 @@ serve(async (req) => {
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Phone:</strong> ${phone}</p>
         <p><strong>Message:</strong> ${message}</p>
-        ${propertyTitle ? `<p><strong>Property:</strong> ${propertyTitle}</p>` : ''}
-        ${propertyId ? `<p><strong>Property ID:</strong> ${propertyId}</p>` : ''}
+        ${propertyTitle ? `<p><strong>Property:</strong> ${propertyTitle}</p>` : ""}
+        ${propertyId ? `<p><strong>Property ID:</strong> ${propertyId}</p>` : ""}
       `;
 
       const { data, error } = await resend.emails.send({
-        from: 'EL-YANIS <onboarding@resend.dev>',
-        to: ['elyanismo@gmail.com'],
+        from: "EL-YANIS <onboarding@resend.dev>",
+        to: ["elyanismo@gmail.com"],
         subject: propertyTitle
           ? `New inquiry for: ${propertyTitle}`
-          : 'New contact message from EL-YANIS website',
+          : "New contact message from EL-YANIS website",
         html: emailHtml,
         replyTo: email,
       });
 
-      if (error) return new Response(JSON.stringify({ error }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      if (error)
+        return new Response(JSON.stringify({ error }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
 
       return new Response(JSON.stringify(data), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       });
     } catch (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       });
     }
   }
@@ -1592,9 +1570,9 @@ serve(async (req) => {
   return new Response(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Authorization, Content-Type",
     },
   });
 });
@@ -1957,4 +1935,4 @@ npx supabase functions deploy send-contact-email
 
 ---
 
-*End of specification. This document contains everything needed to rebuild the EL-YANIS Real Estate Platform v2.1 from scratch.*
+_End of specification. This document contains everything needed to rebuild the EL-YANIS Real Estate Platform v2.1 from scratch._

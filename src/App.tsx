@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,8 +14,21 @@ import Agents from "./pages/Agents";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+import RequireAdmin from "@/components/admin/RequireAdmin";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminLogin from "./pages/AdminLogin";
+import AdminUsers from "./pages/AdminUsers";
+import { AuthProvider } from "@/lib/auth/AuthContext";
+import Register from "./pages/Register";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 45_000,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -24,19 +37,34 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route element={<WebLayout />}>
-                <Route path="/" element={<Index />} />
-                <Route path="/listings" element={<Listings />} />
-                <Route path="/property/:id" element={<PropertyDetail />} />
-                <Route path="/services" element={<Services />} />
-                <Route path="/agents" element={<Agents />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/contact" element={<Contact />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+          <BrowserRouter basename={import.meta.env.BASE_URL}>
+            <AuthProvider>
+              <Routes>
+                <Route path="/register" element={<Register />} />
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route
+                  path="/admin"
+                  element={
+                    <RequireAdmin>
+                      <Outlet />
+                    </RequireAdmin>
+                  }
+                >
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="users" element={<AdminUsers />} />
+                </Route>
+                <Route element={<WebLayout />}>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/listings" element={<Listings />} />
+                  <Route path="/property/:id" element={<PropertyDetail />} />
+                  <Route path="/services" element={<Services />} />
+                  <Route path="/agents" element={<Agents />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+              </Routes>
+            </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>

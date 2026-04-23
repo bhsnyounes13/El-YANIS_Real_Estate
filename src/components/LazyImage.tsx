@@ -13,7 +13,9 @@ const LazyImage = ({ src, alt, className }: LazyImageProps) => {
 
   if (error) {
     return (
-      <div className={cn("flex items-center justify-center bg-muted text-muted-foreground", className)}>
+      <div
+        className={cn("flex items-center justify-center bg-muted text-muted-foreground", className)}
+      >
         <span className="text-sm">Image unavailable</span>
       </div>
     );
@@ -21,9 +23,7 @@ const LazyImage = ({ src, alt, className }: LazyImageProps) => {
 
   return (
     <div className={cn("relative overflow-hidden bg-muted", className)}>
-      {!loaded && (
-        <div className="absolute inset-0 animate-pulse bg-muted" />
-      )}
+      {!loaded && <div className="absolute inset-0 animate-pulse bg-muted" />}
       <img
         src={src}
         alt={alt}
@@ -32,7 +32,7 @@ const LazyImage = ({ src, alt, className }: LazyImageProps) => {
         onError={() => setError(true)}
         className={cn(
           "h-full w-full object-cover transition-opacity duration-500",
-          loaded ? "opacity-100" : "opacity-0"
+          loaded ? "opacity-100" : "opacity-0",
         )}
       />
     </div>

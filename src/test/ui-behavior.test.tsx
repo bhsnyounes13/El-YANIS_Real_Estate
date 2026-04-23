@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import PropertyCard from "@/components/PropertyCard";
-import { properties } from "@/data/mockData";
+import { demoProperties as properties } from "@/test/fixtures/demoCatalog";
 import { LanguageProvider, useLanguage } from "@/i18n/LanguageContext";
 
 function LanguageProbe() {
@@ -53,9 +53,14 @@ describe("ui behavior safeguards", () => {
       </LanguageProvider>,
     );
 
-    expect(screen.getByText(rentProperty.title_fr)).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(rentProperty.title_fr.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))),
+    ).toBeInTheDocument();
     expect(screen.getByText("À louer")).toBeInTheDocument();
     expect(screen.getByText("/mois")).toBeInTheDocument();
-    expect(screen.getByRole("link")).toHaveAttribute("href", `/property/${rentProperty.id}`);
+    expect(screen.getByRole("link", { name: rentProperty.title_fr })).toHaveAttribute(
+      "href",
+      `/property/${rentProperty.id}`,
+    );
   });
 });

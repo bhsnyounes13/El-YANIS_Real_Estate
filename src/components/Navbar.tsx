@@ -23,34 +23,38 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 glass-effect-strong shadow-sm">
-      <div className="container flex h-18 items-center justify-between py-3">
-        <Link to="/" className="flex items-center gap-2">
-          <img src={logo} alt="EL-YANIS" className="h-9 w-9 rounded-lg object-cover" />
-          <span className="font-heading text-xl font-bold text-foreground tracking-tight">
+    <header className="sticky top-0 z-50 glass-nav shadow-[0_8px_32px_rgba(0,55,176,0.06)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+      <div className="container flex min-h-16 items-center justify-between py-3">
+        <Link to="/" className="flex items-center gap-3">
+          <img
+            src={logo}
+            alt="EL-YANIS"
+            className="h-10 w-10 rounded-2xl object-cover ring-1 ring-outline-variant/30"
+          />
+          <span className="font-heading text-lg font-bold tracking-[-0.03em] text-foreground">
             EL-YANIS
           </span>
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden items-center gap-0.5 md:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={cn(
-                "relative rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-300",
-                location.pathname === link.path
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {t(link.key)}
-              {location.pathname === link.path && (
-                <span className="absolute bottom-0.5 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-primary" />
-              )}
-            </Link>
-          ))}
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
+          {navLinks.map((link) => {
+            const active = location.pathname === link.path;
+            return (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={cn(
+                  "relative rounded-2xl px-3.5 py-2 text-sm font-medium transition-colors",
+                  active ? "text-primary" : "text-on-surface-variant hover:text-foreground",
+                )}
+              >
+                {t(link.key)}
+                {active && (
+                  <span className="absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-gradient-to-r from-[#0037b0] to-[#1d4ed8]" />
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-1">
@@ -69,9 +73,11 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile nav */}
       {mobileOpen && (
-        <nav className="animate-fade-in border-t bg-card p-4 md:hidden">
+        <nav
+          className="animate-fade-in border-t border-outline-variant/20 bg-card/95 p-4 backdrop-blur-xl md:hidden"
+          aria-label="Mobile"
+        >
           <div className="flex flex-col gap-1">
             {navLinks.map((link) => (
               <Link
@@ -79,10 +85,10 @@ const Navbar = () => {
                 to={link.path}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-300",
+                  "rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
                   location.pathname === link.path
                     ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    : "text-on-surface-variant hover:bg-surface-container hover:text-foreground",
                 )}
               >
                 {t(link.key)}

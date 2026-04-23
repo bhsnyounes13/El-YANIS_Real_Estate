@@ -28,9 +28,12 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setLanguageState(lang);
   }, []);
 
-  const t = useCallback((key: string): string => {
-    return translations[key]?.[language] || key;
-  }, [language]);
+  const t = useCallback(
+    (key: string): string => {
+      return translations[key]?.[language] || key;
+    },
+    [language],
+  );
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t, dir }}>
