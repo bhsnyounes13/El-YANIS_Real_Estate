@@ -43,13 +43,27 @@ export async function fetchWithDiagnostics(
   }
 }
 
-async function parseJsonSafe<T>(res: Response): Promise<T> {
+async function parseJsonResponseBody<T>(res: Response): Promise<T> {
   const text = await res.text();
-  if (!text) return {} as T;
+  if (!text) {
+    throw new ApiError("Réponse vide de l’API", res.status);
+  }
+  const trimmed = text.trimStart();
+  if (
+    trimmed.startsWith("<!") ||
+    trimmed.startsWith("<html") ||
+    (res.headers.get("content-type") ?? "").toLowerCase().includes("text/html")
+  ) {
+    throw new ApiError(
+      "L’API a renvoyé du HTML au lieu de JSON. Vérifiez que /api/ est bien proxifié vers Node (Nginx/Apache) et non servi par la SPA.",
+      502,
+      { code: "HTML_INSTEAD_OF_JSON" },
+    );
+  }
   try {
     return JSON.parse(text) as T;
   } catch {
-    return {} as T;
+    throw new ApiError("Réponse JSON invalide de l’API", 502, { preview: text.slice(0, 120) });
   }
 }
 
@@ -81,7 +95,7 @@ export async function apiGet<T>(path: string): Promise<T> {
   if (!res.ok) {
     await throwApiError(res);
   }
-  return parseJsonSafe<T>(res);
+  return parseJsonResponseBody<T>(res);
 }
 
 export async function apiPost<T>(path: string, body: unknown): Promise<T> {
@@ -97,7 +111,7 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   if (!res.ok) {
     await throwApiError(res);
   }
-  return parseJsonSafe<T>(res);
+  return parseJsonResponseBody<T>(res);
 }
 
 async function fetchAuth(path: string, init: RequestInit): Promise<Response> {
@@ -121,7 +135,7 @@ export async function apiGetAuth<T>(path: string): Promise<T> {
   if (!res.ok) {
     await throwApiError(res);
   }
-  return parseJsonSafe<T>(res);
+  return parseJsonResponseBody<T>(res);
 }
 
 export async function apiPostAuth<T>(path: string, body: unknown): Promise<T> {
@@ -133,7 +147,7 @@ export async function apiPostAuth<T>(path: string, body: unknown): Promise<T> {
   if (!res.ok) {
     await throwApiError(res);
   }
-  return parseJsonSafe<T>(res);
+  return parseJsonResponseBody<T>(res);
 }
 
 export async function apiPatchAuth<T>(path: string, body: unknown): Promise<T> {
@@ -145,7 +159,7 @@ export async function apiPatchAuth<T>(path: string, body: unknown): Promise<T> {
   if (!res.ok) {
     await throwApiError(res);
   }
-  return parseJsonSafe<T>(res);
+  return parseJsonResponseBody<T>(res);
 }
 
 export async function apiDeleteAuth(path: string): Promise<void> {
