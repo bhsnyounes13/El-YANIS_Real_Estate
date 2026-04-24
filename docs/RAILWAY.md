@@ -18,6 +18,8 @@
 
 Railway injecte **`PORT`** automatiquement.
 
+**Railpack / install** : le dépôt doit utiliser **`package-lock.json` (npm)** uniquement. Ne commitez pas **`bun.lockb`** (sinon Railpack lance `bun install` et peut échouer sur « lockfile is frozen »).
+
 ### Variables d’environnement (service web)
 
 | Variable | Obligatoire | Remarque |

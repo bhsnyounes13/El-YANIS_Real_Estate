@@ -7,6 +7,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Bun (dépôt = npm + package-lock.json ; Railpack choisit Bun si bun.lockb est présent)
+bun.lockb
+bun.lock
+
 node_modules
 dist
 .env
