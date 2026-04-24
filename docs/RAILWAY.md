@@ -13,7 +13,8 @@
 
 | Étape | Commande |
 |--------|-----------|
-| Build | `npm ci --include=dev && npm run build:production` |
+| Install | `npm ci` (phase Railpack ; voir `.npmrc` pour garder les devDependencies) |
+| Build | `npm run build:production` (ne pas relancer `npm ci` ici : évite `EBUSY` sur `node_modules/.vite`) |
 | Start | `npm start` → `node backend/dist/index.js` |
 
 Railway injecte **`PORT`** automatiquement.
