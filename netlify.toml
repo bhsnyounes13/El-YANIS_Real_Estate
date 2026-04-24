@@ -1,4 +1,6 @@
 [build]
+  # Sur Netlify : définir NETLIFY_API_PROXY_TARGET (ou VITE_API_URL) pour préfixer
+  # dist/_redirects avec un proxy /api/* → backend (voir scripts/write-netlify-dist-redirects.mjs).
   command = "npm run build"
   publish = "dist"
 

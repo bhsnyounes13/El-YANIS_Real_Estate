@@ -10,7 +10,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const waitOn = require("wait-on");
 
-const port = (process.env.PORT ?? "3001").trim() || "3001";
+const port = (process.env.PORT ?? "3000").trim() || "3000";
 const resource = `http-get://127.0.0.1:${port}/health`;
 
 try {

@@ -23,7 +23,7 @@ Sur le serveur, créez un fichier **`.env`** à la racine du dépôt (même prin
 | `JWT_ACCESS_SECRET` | Au moins 32 caractères, secret fort. |
 | `FRONTEND_ORIGIN` | URL **exacte** du site, ex. `https://votredomaine.com` (HTTPS, une seule origine). |
 | `TURNSTILE_SECRET_KEY` | **Obligatoire** en production (validation au démarrage de l’API). |
-| `PORT` | `3001` (ou autre port interne ; Nginx proxy vers ce port). |
+| `PORT` | `3000` par défaut si absent (ou autre port interne ; Nginx proxy vers ce port). |
 
 Images / stockage :
 
@@ -69,7 +69,7 @@ Exemple prêt à adapter : **`deploy/hostinger.nginx.conf.example`**.
 Points clés :
 
 - `root` vers le dossier **`dist/`** généré par Vite.
-- `location /api/` → proxy vers `http://127.0.0.1:3001` (ou le `PORT` de l’API).
+- `location /api/` → proxy vers `http://127.0.0.1:3000` (ou le `PORT` de l’API dans `.env`).
 - `location /uploads/` → même proxy si vous utilisez le stockage disque local.
 - `try_files` pour le routage SPA (`/index.html`).
 

@@ -269,9 +269,9 @@ const translations: Record<string, Record<Language, string>> = {
     ar: "تعذّر تحميل البيانات. تحقق من الاتصال وحاول مجدداً.",
   },
   "api.backendUnreachable": {
-    en: "Cannot reach the API (port 3001). Start the backend (npm run dev:api or dev:full), ensure DATABASE_URL and JWT_ACCESS_SECRET are set in .env (see .env.example), and that PostgreSQL is running.",
-    fr: "Impossible de joindre l’API (port 3001). Lancez le backend (npm run dev:api ou dev:full), vérifiez DATABASE_URL et JWT_ACCESS_SECRET dans .env (voir .env.example), et que PostgreSQL tourne.",
-    ar: "تعذّر الوصول إلى واجهة API (المنفذ 3001). شغّل الخادم الخلفي (npm run dev:api أو dev:full)، وتأكد من DATABASE_URL وJWT_ACCESS_SECRET في .env (انظر .env.example)، وأن PostgreSQL يعمل.",
+    en: "Cannot reach the API (port 3000 by default). Start the backend (npm run dev:api or dev:full), ensure DATABASE_URL and JWT_ACCESS_SECRET are set in .env (see .env.example), and that PostgreSQL is running.",
+    fr: "Impossible de joindre l’API (port 3000 par défaut). Lancez le backend (npm run dev:api ou dev:full), vérifiez DATABASE_URL et JWT_ACCESS_SECRET dans .env (voir .env.example), et que PostgreSQL tourne.",
+    ar: "تعذّر الوصول إلى واجهة API (المنفذ 3000 افتراضيًا). شغّل الخادم الخلفي (npm run dev:api أو dev:full)، وتأكد من DATABASE_URL وJWT_ACCESS_SECRET في .env (انظر .env.example)، وأن PostgreSQL يعمل.",
   },
 };
 

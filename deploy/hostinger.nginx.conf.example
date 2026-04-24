@@ -23,9 +23,9 @@ server {
     gzip on;
     gzip_types text/plain text/css application/json application/javascript image/svg+xml;
 
-    # API Node (Express sur le port interne 3001)
+    # API Node (Express : PORT dans .env, défaut 3000)
     location /api/ {
-        proxy_pass http://127.0.0.1:3001;
+        proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -36,7 +36,7 @@ server {
 
     # Images upload admin (stockage disque local sur l’API)
     location /uploads/ {
-        proxy_pass http://127.0.0.1:3001;
+        proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

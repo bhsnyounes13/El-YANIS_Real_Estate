@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -34,7 +35,8 @@ export function createApp() {
   app.use(securityHeadersMiddleware);
   app.use(
     cors({
-      origin: config.frontendOrigin,
+      // Temporaire : toutes les origines (reflet de l’en-tête Origin pour rester compatible avec credentials).
+      origin: (_origin, callback) => callback(null, true),
       credentials: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"],
@@ -74,6 +76,10 @@ export function createApp() {
     res.json({ ok: true });
   });
 
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok" });
+  });
+
   app.use("/api/auth", authRoutes());
   app.use("/api/properties", propertyRoutes());
   app.use("/api/agents", agentRoutes());
@@ -81,6 +87,20 @@ export function createApp() {
   app.use("/api", inquiryPublicRoutes());
   app.use("/api/admin", adminRoutes());
   app.use("/api/user", userRoutes());
+
+  // Monolithe (ex. Render) : servir le build Vite `dist/` après `npm run build:production`.
+  const distDir = path.resolve(process.cwd(), "dist");
+  const indexHtml = path.join(distDir, "index.html");
+  if (process.env.SERVE_SPA === "true" && fs.existsSync(indexHtml)) {
+    app.use(express.static(distDir, { index: false, maxAge: "1h" }));
+    app.use((req, res, next) => {
+      if (req.method !== "GET" && req.method !== "HEAD") return next();
+      if (req.path.startsWith("/api")) return next();
+      res.sendFile(indexHtml, (err) => {
+        if (err) next(err);
+      });
+    });
+  }
 
   app.use((_req, _res, next) => {
     next(new HttpError(404, "Not found"));

@@ -32,7 +32,7 @@ Le système est découpé en **trois couches principales** :
 | **API Express** | REST JSON, validation, authentification JWT, rôles, persistance via Prisma. |
 | **PostgreSQL** | Données métier (utilisateurs, biens, agents, services page, demandes). |
 
-En développement, Vite (port **8080**) peut **proxy** les requêtes `/api` vers l’API locale (**3001** par défaut). En production, le frontend et l’API peuvent être sur le même domaine (chemins relatifs `/api/...`) ou sur des origines distinctes (`VITE_API_URL`, `FRONTEND_ORIGIN` pour CORS).
+En développement, Vite (port **8080**) peut **proxy** les requêtes `/api` vers l’API locale (**3000** par défaut si `PORT` est absent). En production, le frontend et l’API peuvent être sur le même domaine (chemins relatifs `/api/...`) ou sur des origines distinctes (`VITE_API_URL`, `FRONTEND_ORIGIN` pour CORS).
 
 ```mermaid
 flowchart LR

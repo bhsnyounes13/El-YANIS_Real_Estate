@@ -5,7 +5,8 @@ function required(name: string): string {
 }
 
 export const config = {
-  port: Number(process.env.PORT ?? "3001"),
+  /** Port HTTP Express : `PORT` dans l’environnement, sinon 3000. */
+  port: Number(process.env.PORT) || 3000,
   nodeEnv: process.env.NODE_ENV ?? "development",
   /**
    * Origine exacte du frontend (CORS + cookies). En production : obligatoire, une seule URL, jamais `*`.

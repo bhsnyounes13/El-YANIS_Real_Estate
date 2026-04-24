@@ -15,7 +15,7 @@ function normalizeBase(raw: string | undefined): string {
 
 export default defineConfig(({ mode }) => {
   const envAll = loadEnv(mode, process.cwd(), "");
-  const apiPort = (envAll.PORT ?? process.env.PORT ?? "3001").trim() || "3001";
+  const apiPort = (envAll.PORT ?? process.env.PORT ?? "3000").trim() || "3000";
   const envDefines = Object.fromEntries(
     Object.entries(loadEnv(mode, process.cwd(), "VITE_")).map(([key, value]) => [
       `import.meta.env.${key}`,

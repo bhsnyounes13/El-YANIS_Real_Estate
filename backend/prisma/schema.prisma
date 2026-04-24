@@ -1,7 +1,9 @@
 // EL-YANIS — PostgreSQL schema (aligned with frontend domain types)
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // Déploiement Linux (VPS, Render, etc.) et images Alpine : moteurs en plus du poste de build.
+  binaryTargets = ["native", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {

@@ -1,0 +1,20 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# À compléter dans le dashboard Render (secrets) :
+#   DATABASE_URL, JWT_ACCESS_SECRET, FRONTEND_ORIGIN, TURNSTILE_SECRET_KEY,
+#   VITE_* si vous rebuildez le front sur Render, etc.
+#
+# build : inclut les devDependencies (Vite, TypeScript) nécessaires au build.
+
+services:
+  - type: web
+    name: elyanis
+    runtime: node
+    buildCommand: npm ci --include=dev && npm run build:production
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SERVE_SPA
+        value: "true"
