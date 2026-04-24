@@ -1,8 +1,9 @@
-# Image finale : Nginx sert uniquement la SPA (dist/). L’API = autre service.
-# Au build Docker : définir VITE_API_URL (et Turnstile si besoin) côté Render.
+# SPA statique servie par Nginx (pas d’API Node dans cette image).
+# Usage : docker build -f Dockerfile.spa -t elyanis-spa .
+# Railway / déploiement API+Node : ne pas utiliser ce fichier (Railpack + npm start).
 #
-# `npm ci --ignore-scripts` : évite postinstall `prisma generate` (inutile pour Vite, schéma absent à cette étape).
-# Puis script d’installation d’esbuild (binaire requis pour `vite build`).
+# `npm ci --ignore-scripts` : pas de prisma generate au postinstall (inutile pour Vite).
+# Puis esbuild (binaire requis pour `vite build`).
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
 
