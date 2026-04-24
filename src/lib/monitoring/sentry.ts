@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/react";
+import { getApiBase } from "@/lib/api/client";
 
 /** Source maps : activer dans le pipeline (Sentry CLI / plugin Vite) avec `VITE_SENTRY_RELEASE` aligné sur le build. */
 export function initSentry(): void {
@@ -9,11 +10,14 @@ export function initSentry(): void {
   const tracesSampleRate =
     Number.isFinite(tracesRaw) && tracesRaw >= 0 && tracesRaw <= 1 ? tracesRaw : 0.1;
 
-  const tracePropagationTargets: (string | RegExp)[] = ["localhost", /^\//];
-  const apiUrl = import.meta.env.VITE_API_URL?.trim();
-  if (apiUrl) {
+  const tracePropagationTargets: (string | RegExp)[] = [/^\//];
+  if (typeof window !== "undefined") {
+    tracePropagationTargets.push(window.location.origin);
+  }
+  const apiBase = getApiBase();
+  if (apiBase) {
     try {
-      tracePropagationTargets.push(new URL(apiUrl).origin);
+      tracePropagationTargets.push(new URL(apiBase).origin);
     } catch {
       /* ignore invalid VITE_API_URL */
     }

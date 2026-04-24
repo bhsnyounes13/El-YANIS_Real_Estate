@@ -1,16 +1,25 @@
 /**
  * Client HTTP pour l’API catalogue publique et formulaires.
- * Si `VITE_API_URL` est vide, les URLs sont relatives (`/api/...`) — même origine ou proxy Vite.
+ *
+ * Base d’URL : `import.meta.env.VITE_API_URL` (injectée au **build** par Vite, sans slash final).
+ * Si elle est vide, les requêtes utilisent des chemins relatifs `/api/...` (même origine ou proxy dev).
+ *
+ * @example
+ * // .env / CI : VITE_API_URL=https://api.example.com
+ * // apiGet("/api/properties") → fetch("https://api.example.com/api/properties")
+ * //
+ * // Sans variable : apiGet("/api/properties") → fetch("/api/properties")
  */
 
 import { getAccessToken } from "@/lib/auth/accessToken";
 
+/** Retourne la valeur normalisée de `import.meta.env.VITE_API_URL` (sans `/` final), ou `""`. */
 export function getApiBase(): string {
   const raw = import.meta.env.VITE_API_URL as string | undefined;
   return (raw ?? "").trim().replace(/\/$/, "");
 }
 
-/** Construit l’URL finale (origine absolue ou chemin relatif). */
+/** Préfixe `path` avec la base API (`VITE_API_URL`) ou laisse un chemin relatif. */
 export function resolveApiUrl(path: string): string {
   const base = getApiBase();
   const p = path.startsWith("/") ? path : `/${path}`;

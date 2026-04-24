@@ -10,8 +10,8 @@ export interface AuthUser {
 }
 
 /**
- * Même règle que le catalogue : `VITE_API_URL` si défini au build, sinon repli `VITE_AUTH_API_BASE`,
- * sinon chemins relatifs `/api/...` (même domaine + proxy).
+ * Même règle que le catalogue : `import.meta.env.VITE_API_URL` via `getApiBase()` / `resolveApiUrl`,
+ * sinon repli `VITE_AUTH_API_BASE`, sinon chemins relatifs `/api/...` (même domaine + proxy).
  */
 function resolveAuthPath(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
