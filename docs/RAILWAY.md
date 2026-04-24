@@ -29,7 +29,7 @@ Railway injecte **`PORT`** automatiquement. L’API écoute par défaut sur **`0
 | `DATABASE_URL` | oui | Fournie par le plugin Postgres si lié ; en cas d’échec de connexion, vérifier `?sslmode=require` (souvent requis vers Postgres hébergé). |
 | `DB_CONNECT_TIMEOUT_MS` | non | Défaut 30000 — après démarrage HTTP, la vérif Prisma échoue avec un message explicite au lieu de bloquer indéfiniment. |
 | `JWT_ACCESS_SECRET` | oui | ≥ 32 caractères |
-| `FRONTEND_ORIGIN` | oui | URL **publique** exacte du service, ex. `https://xxx.up.railway.app` (sans `/` final, une seule origine) |
+| `FRONTEND_ORIGIN` | recommandé | URL **publique** exacte (sans `/` final). **Si absent** : l’API utilise `https://${RAILWAY_PUBLIC_DOMAIN}` (domaine public généré dans *Networking*). Définissez `FRONTEND_ORIGIN` si vous utilisez un **domaine personnalisé** ou si `RAILWAY_PUBLIC_DOMAIN` est vide au premier déploiement. |
 | `TURNSTILE_SECRET_KEY` | oui en prod | Requis par la validation au démarrage de l’API |
 | `SERVE_SPA` | recommandé | `true` pour servir le build Vite (`dist/`) depuis Express (monolithe) |
 

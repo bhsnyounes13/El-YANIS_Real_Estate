@@ -4,18 +4,47 @@ function required(name: string): string {
   return v;
 }
 
+function stripTrailingSlash(s: string): string {
+  return s.replace(/\/$/, "");
+}
+
+/**
+ * Origine publique du site (CORS, cookies). En prod : `FRONTEND_ORIGIN` si défini,
+ * sinon sur Railway `https://${RAILWAY_PUBLIC_DOMAIN}` quand un domaine public est généré.
+ */
+function resolveFrontendOrigin(): string {
+  const explicit = process.env.FRONTEND_ORIGIN?.trim();
+  if (explicit) return stripTrailingSlash(explicit);
+
+  const nodeEnv = process.env.NODE_ENV ?? "development";
+  if (nodeEnv !== "production") {
+    return "http://localhost:8080";
+  }
+
+  const railway = process.env.RAILWAY_PUBLIC_DOMAIN?.trim();
+  if (railway) {
+    const host = stripTrailingSlash(railway.replace(/^https?:\/\//i, ""));
+    return `https://${host}`;
+  }
+
+  throw new Error(
+    [
+      "Missing FRONTEND_ORIGIN in production (required for CORS and cookies).",
+      "Set FRONTEND_ORIGIN to your public URL (e.g. https://your-app.up.railway.app),",
+      "or add Public Networking → Generate Domain on this Railway service so RAILWAY_PUBLIC_DOMAIN is set.",
+    ].join("\n"),
+  );
+}
+
 export const config = {
   /** Port HTTP Express : `PORT` dans l’environnement, sinon 3000. */
   port: Number(process.env.PORT) || 3000,
   nodeEnv: process.env.NODE_ENV ?? "development",
   /**
-   * Origine exacte du frontend (CORS + cookies). En production : obligatoire, une seule URL, jamais `*`.
-   * En développement : défaut http://localhost:8080 si non défini.
+   * Origine exacte du frontend (CORS + cookies). En production : une seule URL, jamais `*`.
+   * Voir `resolveFrontendOrigin` (Railway : repli sur `RAILWAY_PUBLIC_DOMAIN`).
    */
-  frontendOrigin:
-    process.env.NODE_ENV === "production"
-      ? required("FRONTEND_ORIGIN")
-      : process.env.FRONTEND_ORIGIN?.trim() ?? "http://localhost:8080",
+  frontendOrigin: resolveFrontendOrigin(),
   jwtAccessSecret: () =>
     process.env.NODE_ENV === "test"
       ? "test-access-secret-min-32-chars-long!!"

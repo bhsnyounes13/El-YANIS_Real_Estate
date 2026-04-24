@@ -67,7 +67,6 @@ export function validateStartupEnvironment(): void {
   const missingProd: string[] = [];
   if (!process.env.DATABASE_URL?.trim()) missingProd.push("DATABASE_URL");
   if (!process.env.JWT_ACCESS_SECRET?.trim()) missingProd.push("JWT_ACCESS_SECRET");
-  if (!process.env.FRONTEND_ORIGIN?.trim()) missingProd.push("FRONTEND_ORIGIN");
   if (missingProd.length > 0) {
     throw formatStartupFailure("PRODUCTION — variables obligatoires manquantes", [
       `Manquant : ${missingProd.join(", ")}`,
@@ -81,7 +80,7 @@ export function validateStartupEnvironment(): void {
     ]);
   }
 
-  const origin = process.env.FRONTEND_ORIGIN!.trim();
+  const origin = config.frontendOrigin;
   if (origin === "*" || origin.includes(",")) {
     throw formatStartupFailure("PRODUCTION — FRONTEND_ORIGIN invalide", [
       "Une seule origine est autorisée (pas de wildcard ni de liste).",
