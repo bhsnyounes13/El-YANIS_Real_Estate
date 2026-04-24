@@ -17,7 +17,7 @@
 | Build | `npm run build:production` (ne pas relancer `npm ci` ici : évite `EBUSY` sur `node_modules/.vite`) |
 | Start | `npm start` → `node backend/dist/index.js` |
 
-Railway injecte **`PORT`** automatiquement.
+Railway injecte **`PORT`** automatiquement. L’API écoute par défaut sur **`0.0.0.0`** (variable optionnelle **`HOST`** pour surcharger).
 
 **Railpack / install** : le dépôt doit utiliser **`package-lock.json` (npm)** uniquement. Ne commitez pas **`bun.lockb`** (sinon Railpack lance `bun install` et peut échouer sur « lockfile is frozen »).
 
@@ -44,6 +44,13 @@ Railway injecte **`PORT`** automatiquement.
 ### Healthcheck
 
 Chemin utilisé : **`/api/health`** (voir `railway.json`).
+
+Si le déploiement affiche **« service unavailable »** pendant plusieurs minutes :
+
+1. Ouvrez les **logs du déploiement** (runtime), pas seulement le build : recherchez `bootstrap_failed`, erreurs Prisma ou stack trace au démarrage.
+2. Vérifiez que **`DATABASE_URL`** pointe vers une base joignable depuis Railway (plugin Postgres lié au service).
+3. Vérifiez **`JWT_ACCESS_SECRET`** (≥ 32 caractères), **`FRONTEND_ORIGIN`** (URL exacte du site), **`TURNSTILE_SECRET_KEY`** : en production, leur absence ou une valeur invalide peut faire **quitter le processus** avant `listen`, donc le healthcheck échoue.
+4. Si vous servez le frontend depuis le même processus, définissez **`SERVE_SPA=true`** après le premier build réussi (le healthcheck reste sur `/api/health`).
 
 ### Image Docker SPA seule
 

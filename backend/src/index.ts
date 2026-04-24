@@ -27,9 +27,10 @@ async function main() {
   await bootstrapEnvAdmin();
 
   const app = createApp();
-  app.listen(config.port, () => {
+  const host = process.env.HOST?.trim() || "0.0.0.0";
+  app.listen(config.port, host, () => {
     logger.info(
-      { port: config.port, frontendOrigin: config.frontendOrigin },
+      { host, port: config.port, frontendOrigin: config.frontendOrigin },
       "api_started",
     );
   });
