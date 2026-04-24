@@ -4,10 +4,12 @@
 
 1. **New project** → déployer depuis GitHub (ce dépôt).
 2. Ajouter **PostgreSQL** (plugin Railway) et **lier** la variable `DATABASE_URL` au service web (souvent automatique).
-3. Le fichier **`railway.toml`** force **Railpack** et les commandes de build / start.  
-   **Important** : il ne doit **pas** y avoir de fichier nommé `Dockerfile` à la racine (Railway le priorise et lance **Nginx** sans Node, puis `npm start` échoue). L’image statique Nginx est dans **`Dockerfile.spa`** (`docker build -f Dockerfile.spa .`).
+3. Le fichier **`railway.json`** force **Railpack**, désactive le Dockerfile (`dockerfilePath: null`) et définit build / start.  
+   **Important** : pas de `Dockerfile` à la racine (sinon Railway build une image **Nginx** sans Node, puis `npm start` échoue). Image statique seule : **`Dockerfile.spa`**.
 
-### Commandes (déjà dans `railway.toml`)
+4. Dans le **dashboard Railway** → service → **Settings** : si un **Dockerfile path** personnalisé est renseigné, **supprimez-le** / repassez le builder sur **Railpack**, puis redéployez.
+
+### Commandes (déjà dans `railway.json`)
 
 | Étape | Commande |
 |--------|-----------|
@@ -38,8 +40,8 @@ Railway injecte **`PORT`** automatiquement.
 
 ### Healthcheck
 
-Chemin utilisé : **`/api/health`** (voir `railway.toml`).
+Chemin utilisé : **`/api/health`** (voir `railway.json`).
 
 ### Image Docker SPA seule
 
-**`Dockerfile.spa`** construit une **SPA + Nginx** (pas l’API). Pour Railway « tout-en-un », utilisez **Railpack** + `npm start` (voir `railway.toml`).
+**`Dockerfile.spa`** construit une **SPA + Nginx** (pas l’API). Pour Railway « tout-en-un », utilisez **Railpack** + `npm start` (voir `railway.json`).
