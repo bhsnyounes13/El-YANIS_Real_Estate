@@ -23,17 +23,23 @@ async function bootstrapEnvAdmin(): Promise<void> {
 
 async function main() {
   validateStartupEnvironment();
-  await verifyDatabase(prisma);
-  await bootstrapEnvAdmin();
 
   const app = createApp();
   const host = process.env.HOST?.trim() || "0.0.0.0";
-  app.listen(config.port, host, () => {
-    logger.info(
-      { host, port: config.port, frontendOrigin: config.frontendOrigin },
-      "api_started",
-    );
+
+  await new Promise<void>((resolve, reject) => {
+    const server = app.listen(config.port, host, () => resolve());
+    server.on("error", reject);
   });
+
+  logger.info(
+    { host, port: config.port, frontendOrigin: config.frontendOrigin },
+    "api_started",
+  );
+
+  await verifyDatabase(prisma);
+  await bootstrapEnvAdmin();
+  logger.info("database_ready");
 }
 
 main().catch(async (e) => {

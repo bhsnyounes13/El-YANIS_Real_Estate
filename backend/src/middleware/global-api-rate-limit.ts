@@ -6,7 +6,10 @@ export const globalApiRateLimiter = rateLimit({
   max: 600,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => req.method === "OPTIONS",
+  skip: (req) =>
+    req.method === "OPTIONS" ||
+    req.path === "/health" ||
+    (typeof req.originalUrl === "string" && req.originalUrl.startsWith("/api/health")),
   handler: (_req, res) => {
     res.status(429).json({
       error: "Trop de requêtes. Réessayez dans quelques minutes.",

@@ -26,7 +26,8 @@ Railway injecte **`PORT`** automatiquement. L’API écoute par défaut sur **`0
 | Variable | Obligatoire | Remarque |
 |----------|-------------|----------|
 | `NODE_ENV` | oui | `production` |
-| `DATABASE_URL` | oui | Fournie par le plugin Postgres si lié |
+| `DATABASE_URL` | oui | Fournie par le plugin Postgres si lié ; en cas d’échec de connexion, vérifier `?sslmode=require` (souvent requis vers Postgres hébergé). |
+| `DB_CONNECT_TIMEOUT_MS` | non | Défaut 30000 — après démarrage HTTP, la vérif Prisma échoue avec un message explicite au lieu de bloquer indéfiniment. |
 | `JWT_ACCESS_SECRET` | oui | ≥ 32 caractères |
 | `FRONTEND_ORIGIN` | oui | URL **publique** exacte du service, ex. `https://xxx.up.railway.app` (sans `/` final, une seule origine) |
 | `TURNSTILE_SECRET_KEY` | oui en prod | Requis par la validation au démarrage de l’API |

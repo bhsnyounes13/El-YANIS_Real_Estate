@@ -19,10 +19,31 @@ function describePrismaDbError(err: unknown): string[] {
   return lines;
 }
 
+function connectTimeoutMs(): number {
+  const raw = process.env.DB_CONNECT_TIMEOUT_MS?.trim();
+  const n = raw ? Number(raw) : NaN;
+  if (Number.isFinite(n) && n > 0) return Math.min(Math.floor(n), 120_000);
+  return 30_000;
+}
+
 export async function verifyDatabase(prisma: PrismaClient): Promise<void> {
+  const ms = connectTimeoutMs();
   try {
-    await prisma.$connect();
-    await prisma.$queryRaw`SELECT 1`;
+    await Promise.race([
+      (async () => {
+        await prisma.$connect();
+        await prisma.$queryRaw`SELECT 1`;
+      })(),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(
+            new Error(
+              `Database connection timed out after ${ms}ms (check DATABASE_URL, network, SSL).`,
+            ),
+          );
+        }, ms);
+      }),
+    ]);
   } catch (err) {
     logger.error({ err }, "database_unreachable");
     const banner = "═".repeat(64);
