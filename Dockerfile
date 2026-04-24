@@ -1,15 +1,14 @@
-# Image finale : Nginx sert uniquement la SPA (dossier dist/).
-# L’API Express doit tourner ailleurs (Render Web Service Node, VPS…) ; au build Docker,
-# passez VITE_API_URL vers cette API (Build args / secrets Render).
+# Image finale : Nginx sert uniquement la SPA (dist/). L’API = autre service.
+# Au build Docker : définir VITE_API_URL (et Turnstile si besoin) côté Render.
 #
-# Build sur Debian (glibc) : évite la plupart des échecs `npm ci` liés à Alpine + bcrypt / outils natifs.
+# `npm ci --ignore-scripts` : évite postinstall `prisma generate` (inutile pour Vite, schéma absent à cette étape).
+# Puis script d’installation d’esbuild (binaire requis pour `vite build`).
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-# postinstall → prisma generate (schéma requis avant npm ci)
-COPY backend/prisma ./backend/prisma
-RUN npm ci
+RUN npm ci --ignore-scripts \
+ && node node_modules/esbuild/install.js
 
 COPY . .
 
