@@ -48,6 +48,9 @@ export default defineConfig(({ mode }) => {
         name: "elyanis-inject-api-base",
         apply: "build",
         transformIndexHtml(html) {
+          if (html.includes("elyanis-api-base") || html.includes("__ELYANIS_API_BASE__")) {
+            return html;
+          }
           const e = loadEnv("production", process.cwd(), "VITE_");
           const base = (e.VITE_API_URL ?? "").trim().replace(/\/$/, "");
           if (!base) return html;

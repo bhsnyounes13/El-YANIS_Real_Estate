@@ -1,6 +1,14 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- API publique (repli côté client). Aligner sur .env.production → VITE_API_URL. -->
+    <meta
+      name="elyanis-api-base"
+      content="https://elyanis-backend-standalone-production.up.railway.app"
+    />
+    <script>
+      window.__ELYANIS_API_BASE__ = "https://elyanis-backend-standalone-production.up.railway.app";
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/jpeg" href="/elyanis-logo.jpg" />
     <link rel="apple-touch-icon" href="/elyanis-logo.jpg" />
