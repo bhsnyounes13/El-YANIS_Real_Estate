@@ -53,6 +53,21 @@ Si le déploiement affiche **« service unavailable »** pendant plusieurs minut
 3. Vérifiez **`JWT_ACCESS_SECRET`** (≥ 32 caractères), **`FRONTEND_ORIGIN`** (URL exacte du site), **`TURNSTILE_SECRET_KEY`** : en production, leur absence ou une valeur invalide peut faire **quitter le processus** avant `listen`, donc le healthcheck échoue.
 4. Si vous servez le frontend depuis le même processus, définissez **`SERVE_SPA=true`** après le premier build réussi (le healthcheck reste sur `/api/health`).
 
+### API seule sur Railway + site Vite ailleurs (ex. elyanis.com, Hostinger, Netlify)
+
+Si le **front** est déployé sur un **autre domaine** que l’API, le build Vite **doit** connaître l’URL de l’API, sinon le navigateur appelle `/api/…` sur l’hébergeur du site → **404** (« API introuvable »).
+
+1. **URL publique de l’API** : dans Railway, service de l’API → **Settings → Networking** (ou l’URL `*.up.railway.app` affichée). Aucun slash final.
+2. **Vérification** : `GET https://<cette-url>/api/health` doit répondre `200` avec un JSON (ex. `{"ok":true}`). Si ce n’est pas le cas, l’URL est incorrecte ou l’API n’écoute pas.
+3. **Build du front** : à la racine du dépôt, définir `VITE_API_URL=https://<cette-même-url>` (fichier **`.env.production`** en local, ou variable de **build** sur la CI / l’hébergeur du site), puis `npm run build` et uploader le dossier `dist/`.
+4. **Variables côté API** (service Railway de l’API) :
+   - `FRONTEND_ORIGIN=https://votre-site.com` (ex. `https://elyanis.com`, **sans** `/` final) — obligatoire pour CORS / cookies.
+   - `NODE_ENV=production` — ne pas laisser `development` en prod.
+   - `JWT_ACCESS_SECRET` (≥ 32 caractères, secret fort), `DATABASE_URL` (plugin Postgres), etc.
+5. **Déploiement du `dist/`** : après `npm run build` local (avec `.env.production` ou `VITE_API_URL` en variable de build), uploader le nouveau `dist/` vers l’hébergeur du site. Le simple remplacement d’un `.env` sur l’hébergeur **statique** ne change **pas** l’URL d’API (elle est **figée** dans le JS).
+
+Sans `VITE_API_URL` au build, le bundle utilise des chemins relatifs ; c’est seulement valable si Nginx (ou l’hébergeur) **proxifie** `/api/` vers la même app — voir [HOSTINGER.md](HOSTINGER.md).
+
 ### Image Docker SPA seule
 
 **`Dockerfile.spa`** construit une **SPA + Nginx** (pas l’API). Pour Railway « tout-en-un », utilisez **Railpack** + `npm start` (voir `railway.json`).
