@@ -39,7 +39,26 @@ export default defineConfig(({ mode }) => {
         "@tanstack/query-core",
       ],
     },
-    plugins: [tailwindcss(), tsconfigPaths({ projects: ["./tsconfig.json"] }), react()],
+    plugins: [
+      tailwindcss(),
+      tsconfigPaths({ projects: ["./tsconfig.json"] }),
+      react(),
+      /** Repli : injecte l’URL API dans index.html (dist) — utile si seul l’ancien JS est en cache. */
+      {
+        name: "elyanis-inject-api-base",
+        apply: "build",
+        transformIndexHtml(html) {
+          const e = loadEnv("production", process.cwd(), "VITE_");
+          const base = (e.VITE_API_URL ?? "").trim().replace(/\/$/, "");
+          if (!base) return html;
+          const script = `<script>window.__ELYANIS_API_BASE__=${JSON.stringify(base)}<\/script>`;
+          if (html.includes("<head>")) {
+            return html.replace("<head>", `<head>\n    ${script}`);
+          }
+          return script + html;
+        },
+      },
+    ],
     server: {
       host: true,
       port: 8080,

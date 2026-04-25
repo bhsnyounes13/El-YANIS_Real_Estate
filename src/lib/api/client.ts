@@ -1,8 +1,9 @@
 /**
  * Client HTTP pour l’API catalogue publique et formulaires.
  *
- * Base d’URL : `import.meta.env.VITE_API_URL` (injectée au **build** par Vite, sans slash final).
- * Si elle est vide, les requêtes utilisent des chemins relatifs `/api/...` (même origine ou proxy dev).
+ * Base d’URL : `import.meta.env.VITE_API_URL` (injectée au **build**), sans slash final. En production,
+ * repli : `window.__ELYANIS_API_BASE__` (injecté dans `dist/index.html` au build) si l’`import.meta` est vide.
+ * Si tout est vide, requêtes **relatives** `/api/...` (même origine ou proxy dev).
  *
  * @example
  * // .env / CI : VITE_API_URL=https://api.example.com
@@ -13,10 +14,21 @@
 
 import { getAccessToken } from "@/lib/auth/accessToken";
 
+declare global {
+  interface Window {
+    /** Injeté au `vite build` si `VITE_API_URL` est dans `.env.production` (repli si le JS minifié n’embarque pas l’import.meta). */
+    __ELYANIS_API_BASE__?: string;
+  }
+}
+
 /** Retourne la valeur normalisée de `import.meta.env.VITE_API_URL` (sans `/` final), ou `""`. */
 export function getApiBase(): string {
-  const raw = import.meta.env.VITE_API_URL as string | undefined;
-  return (raw ?? "").trim().replace(/\/$/, "");
+  const fromEnv = ((import.meta.env.VITE_API_URL as string | undefined) ?? "").trim().replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+  if (import.meta.env.PROD && typeof window !== "undefined" && window.__ELYANIS_API_BASE__?.trim()) {
+    return window.__ELYANIS_API_BASE__.trim().replace(/\/$/, "");
+  }
+  return "";
 }
 
 /** Préfixe `path` avec la base API (`VITE_API_URL`) ou laisse un chemin relatif. */
