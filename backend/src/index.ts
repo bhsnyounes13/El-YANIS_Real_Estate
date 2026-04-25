@@ -25,15 +25,25 @@ async function main() {
   validateStartupEnvironment();
 
   const app = createApp();
-  const host = process.env.HOST?.trim() || "0.0.0.0";
+  const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 
   await new Promise<void>((resolve, reject) => {
-    const server = app.listen(config.port, host, () => resolve());
+    const server = app.listen(PORT, "0.0.0.0", () => resolve());
     server.on("error", reject);
   });
 
+  console.log(`Server running on port ${PORT}`);
+  console.log("NODE_ENV:", process.env.NODE_ENV);
+  console.log("FRONTEND_ORIGIN:", process.env.FRONTEND_ORIGIN ?? "(défaut config)");
+  console.log("API health route: /api/health");
+  console.log("Auth routes mounted at: /api/auth");
   logger.info(
-    { host, port: config.port, frontendOrigin: config.frontendOrigin },
+    {
+      host: "0.0.0.0",
+      port: PORT,
+      frontendOrigin: config.frontendOrigin,
+      allowedCorsOrigins: config.allowedCorsOrigins,
+    },
     "api_started",
   );
 

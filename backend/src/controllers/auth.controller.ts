@@ -14,23 +14,25 @@ import { HttpError } from "../errors/http-error.js";
 import { authBodyPublicSchema } from "../validators/schemas.js";
 import { assertTurnstileIfRequired } from "../utils/form-security.js";
 
+function refreshCookieBase() {
+  return {
+    httpOnly: true,
+    secure: config.cookieSecure,
+    sameSite: config.cookieSameSite,
+    path: "/",
+    ...(config.cookieDomain ? { domain: config.cookieDomain } : {}),
+  } as const;
+}
+
 function setRefreshCookie(res: Response, rawToken: string, expiresAt: Date): void {
   res.cookie(config.cookieName, rawToken, {
-    httpOnly: true,
-    secure: config.nodeEnv === "production",
-    sameSite: "lax",
-    path: "/",
+    ...refreshCookieBase(),
     expires: expiresAt,
   });
 }
 
 function clearRefreshCookie(res: Response): void {
-  res.clearCookie(config.cookieName, {
-    httpOnly: true,
-    secure: config.nodeEnv === "production",
-    sameSite: "lax",
-    path: "/",
-  });
+  res.clearCookie(config.cookieName, { ...refreshCookieBase() });
 }
 
 function publicUser(u: { id: string; email: string; role: Role }) {

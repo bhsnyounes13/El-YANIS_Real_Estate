@@ -15,6 +15,7 @@
     "prebuild:api": "prisma generate",
     "build:api": "tsc -p backend/tsconfig.json",
     "build:production": "npm run build && npm run build:api",
+    "prestart": "prisma generate --schema backend/prisma/schema.prisma",
     "start": "node backend/dist/index.js",
     "start:api": "node backend/dist/index.js",
     "build:dev": "vite build --mode development",

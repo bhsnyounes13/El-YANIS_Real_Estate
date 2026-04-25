@@ -11,7 +11,6 @@ import { logger } from "./logger.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { globalApiRateLimiter } from "./middleware/global-api-rate-limit.js";
 import { securityHeadersMiddleware } from "./middleware/security-headers.middleware.js";
-import { HttpError } from "./errors/http-error.js";
 import { authRoutes } from "./routes/auth.routes.js";
 import { propertyRoutes } from "./routes/property.routes.js";
 import { agentRoutes } from "./routes/agent.routes.js";
@@ -21,6 +20,46 @@ import { adminRoutes } from "./routes/admin.routes.js";
 import { userRoutes } from "./routes/user.routes.js";
 import * as uploadController from "./controllers/upload.controller.js";
 import { asyncHandler } from "./middleware/async-handler.js";
+
+/** Carte d’exposition (diagnostic / déploiement) — hors secrets. */
+const PUBLIC_API_ROUTES: string[] = [
+  "GET /api/health",
+  "GET /api",
+  "GET /health",
+  "PUT /api/upload-local/:uploadId",
+  "POST /api/auth/register",
+  "POST /api/auth/login",
+  "POST /api/auth/logout",
+  "POST /api/auth/refresh",
+  "GET /api/auth/me",
+  "GET /api/properties",
+  "GET /api/properties/featured",
+  "GET /api/properties/:id",
+  "POST /api/properties",
+  "PATCH /api/properties/:id",
+  "DELETE /api/properties/:id",
+  "GET /api/agents",
+  "GET /api/agents/:id",
+  "POST /api/agents",
+  "PATCH /api/agents/:id",
+  "DELETE /api/agents/:id",
+  "GET /api/services",
+  "GET /api/services/:id",
+  "POST /api/services",
+  "PATCH /api/services/:id",
+  "DELETE /api/services/:id",
+  "POST /api/contact",
+  "POST /api/inquiries",
+  "GET /api/user/profile",
+  "GET /api/admin/users",
+  "PATCH /api/admin/users/:id",
+  "DELETE /api/admin/users/:id",
+  "POST /api/admin/uploads/presign",
+  "GET /api/admin/dashboard",
+  "GET /api/admin/inquiries",
+  "DELETE /api/admin/contact-submissions/:id",
+  "DELETE /api/admin/property-inquiries/:id",
+];
 
 const require = createRequire(import.meta.url);
 const pinoHttp = require("pino-http") as (opts?: PinoHttpOptions) => (
@@ -35,8 +74,15 @@ export function createApp() {
   app.use(securityHeadersMiddleware);
   app.use(
     cors({
-      // Temporaire : toutes les origines (reflet de l’en-tête Origin pour rester compatible avec credentials).
-      origin: (_origin, callback) => callback(null, true),
+      origin: (reqOrigin, callback) => {
+        if (!reqOrigin) {
+          return callback(null, true);
+        }
+        if (config.allowedCorsOrigins.includes(reqOrigin)) {
+          return callback(null, true);
+        }
+        return callback(null, false);
+      },
       credentials: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"],
@@ -54,6 +100,24 @@ export function createApp() {
     express.raw({ limit: 21 * 1024 * 1024, type: () => true }),
     asyncHandler(uploadController.receiveLocalPropertyImage),
   );
+
+  // Avant le rate limiter global sur `/api` — le healthcheck Railway / proxy doit toujours répondre 200.
+  app.get("/api/health", (_req, res) => {
+    res.status(200).json({
+      ok: true,
+      service: "elyanis-backend",
+      env: process.env.NODE_ENV || "development",
+      time: new Date().toISOString(),
+    });
+  });
+
+  app.get("/api", (_req, res) => {
+    res.status(200).json({
+      ok: true,
+      service: "elyanis-backend",
+      routes: PUBLIC_API_ROUTES,
+    });
+  });
 
   app.use("/api", globalApiRateLimiter);
   app.use(
@@ -73,11 +137,7 @@ export function createApp() {
   );
 
   app.get("/health", (_req, res) => {
-    res.json({ ok: true });
-  });
-
-  app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok" });
+    res.status(200).json({ ok: true });
   });
 
   app.use("/api/auth", authRoutes());
@@ -88,22 +148,30 @@ export function createApp() {
   app.use("/api/admin", adminRoutes());
   app.use("/api/user", userRoutes());
 
-  // Monolithe (ex. Render) : servir le build Vite `dist/` après `npm run build:production`.
+  // Monolithe (Railway, etc.) : servir le build Vite `dist/` après `npm run build:production`.
   const distDir = path.resolve(process.cwd(), "dist");
   const indexHtml = path.join(distDir, "index.html");
-  if (process.env.SERVE_SPA === "true" && fs.existsSync(indexHtml)) {
-    app.use(express.static(distDir, { index: false, maxAge: "1h" }));
-    app.use((req, res, next) => {
+  const serveSpa =
+    fs.existsSync(indexHtml) &&
+    (process.env.SERVE_SPA === "true" ||
+      (config.nodeEnv === "production" && process.env.SERVE_SPA !== "false"));
+  if (serveSpa) {
+    app.use(express.static(distDir, { maxAge: "1h" }));
+    app.get("*", (req, res, next) => {
       if (req.method !== "GET" && req.method !== "HEAD") return next();
       if (req.path.startsWith("/api")) return next();
-      res.sendFile(indexHtml, (err) => {
+      res.sendFile(path.resolve(distDir, "index.html"), (err) => {
         if (err) next(err);
       });
     });
   }
 
-  app.use((_req, _res, next) => {
-    next(new HttpError(404, "Not found"));
+  app.use((req, res) => {
+    res.status(404).json({
+      error: "Not found",
+      method: req.method,
+      path: req.originalUrl,
+    });
   });
 
   app.use(errorHandler);

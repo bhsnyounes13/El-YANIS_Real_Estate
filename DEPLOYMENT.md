@@ -15,6 +15,9 @@ Créer un fichier `.env` ou configurer les variables sur la plateforme (**Build 
 | `VITE_API_URL`        | **Oui** si l’API est sur un autre domaine que le site | URL du backend **sans** slash final (ex. `https://xxx.up.railway.app`). Si vide : requêtes `/api/…` sur **l’origine du site** (OK seulement avec proxy Nginx ou monolithe). Voir `docs/RAILWAY.md` (API + site séparés). |
 | `VITE_BASE_PATH`      | Non                   | Si l’app est servie sous un sous-chemin (ex. `/app/`). Sinon laisser vide (racine `/`). |
 
+
+**Hostinger + API Railway (production)** : [docs/HOSTINGER_RAILWAY_DEPLOYMENT.md](docs/HOSTINGER_RAILWAY_DEPLOYMENT.md) (variables, CORS, cookies, tests). Exemple de build : [.env.production.example](.env.production.example).
+
 Le mot de passe admin est inclus dans le bundle client : ce n’est qu’une **barrière légère**. Pour une sécurité réelle, prévoir une auth serveur.
 
 ## Commandes locales

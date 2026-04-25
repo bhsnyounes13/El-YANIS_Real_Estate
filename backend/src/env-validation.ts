@@ -6,6 +6,13 @@ import { config } from "./config.js";
 
 const REF = "Voir le fichier `.env.example` à la racine du projet.";
 
+const REF_PROD =
+  "Sur l’hébergeur (ex. Railway → *Variables*), il n’y a pas de fichier `.env` sur le disque. Référence : `.env.example` local.";
+
+function isRailway(): boolean {
+  return Boolean(process.env.RAILWAY_ENVIRONMENT);
+}
+
 function collectMissingDevRequired(): string[] {
   const missing: string[] = [];
   if (!process.env.DATABASE_URL?.trim()) missing.push("DATABASE_URL");
@@ -14,8 +21,34 @@ function collectMissingDevRequired(): string[] {
   return missing;
 }
 
-function formatStartupFailure(title: string, lines: string[]): Error {
+function formatStartupFailure(title: string, lines: string[], options?: { production?: boolean }): Error {
   const banner = "═".repeat(64);
+  const production = options?.production === true;
+  const tail = production
+    ? [
+        "",
+        `  ${REF_PROD}`,
+        "",
+        "  Railway (minimum pour démarrer) :",
+        "  1. Service → add-on **PostgreSQL** (ou coller `DATABASE_URL` d’une base distante).",
+        "  2. `DATABASE_URL` = référence `${{ ... }}` vers la base (onglet *Variables*).",
+        "  3. `JWT_ACCESS_SECRET` = secret aléatoire **≥ 32 caractères**.",
+        "  4. `FRONTEND_ORIGIN` = URL exacte du site (ex. `https://…`) si le front est sur un autre domaine ;",
+        "     sinon laissez un **domaine public** sur le service API pour que `RAILWAY_PUBLIC_DOMAIN` remplisse le CORS.",
+        "  5. Après la première base : exécuter une sync schéma (ex. *Run* `npx prisma db push` en one-shot) si besoin.",
+        "",
+      ]
+    : [
+        "",
+        `  ${REF}`,
+        "",
+        "  Étapes rapides :",
+        "  1. Copier `.env.example` vers `.env` (même dossier que package.json).",
+        "  2. Renseigner les variables listées ci-dessus.",
+        "  3. Démarrer PostgreSQL, puis : npm run db:push",
+        "  4. Relancer : npm run dev:api   ou   npm run dev:full",
+        "",
+      ];
   const body = [
     "",
     banner,
@@ -23,15 +56,7 @@ function formatStartupFailure(title: string, lines: string[]): Error {
     banner,
     "",
     ...lines.map((l) => `  ${l}`),
-    "",
-    `  ${REF}`,
-    "",
-    "  Étapes rapides :",
-    "  1. Copier `.env.example` vers `.env` (même dossier que package.json).",
-    "  2. Renseigner les variables listées ci-dessus.",
-    "  3. Démarrer PostgreSQL, puis : npm run db:push",
-    "  4. Relancer : npm run dev:api   ou   npm run dev:full",
-    "",
+    ...tail,
     banner,
     "",
   ].join("\n");
@@ -68,43 +93,53 @@ export function validateStartupEnvironment(): void {
   if (!process.env.DATABASE_URL?.trim()) missingProd.push("DATABASE_URL");
   if (!process.env.JWT_ACCESS_SECRET?.trim()) missingProd.push("JWT_ACCESS_SECRET");
   if (missingProd.length > 0) {
-    throw formatStartupFailure("PRODUCTION — variables obligatoires manquantes", [
-      `Manquant : ${missingProd.join(", ")}`,
-    ]);
+    const extra: string[] = [];
+    if (isRailway()) {
+      extra.push(
+        "(Railway : sans `DATABASE_URL` / `JWT_ACCESS_SECRET` dans l’onglet **Variables** du service, l’API ne démarre pas.)",
+        "",
+      );
+    }
+    throw formatStartupFailure(
+      "PRODUCTION — variables obligatoires manquantes",
+      [...extra, `Manquant : ${missingProd.join(", ")}`],
+      { production: true },
+    );
   }
 
   const jwtSecret = process.env.JWT_ACCESS_SECRET!.trim();
   if (jwtSecret.length < 32) {
     throw formatStartupFailure("PRODUCTION — JWT_ACCESS_SECRET invalide", [
       `Minimum 32 caractères (actuellement ${jwtSecret.length}).`,
-    ]);
+    ], { production: true });
   }
 
-  const origin = config.frontendOrigin;
-  if (origin === "*" || origin.includes(",")) {
-    throw formatStartupFailure("PRODUCTION — FRONTEND_ORIGIN invalide", [
-      "Une seule origine est autorisée (pas de wildcard ni de liste).",
-    ]);
-  }
-  try {
-    const u = new URL(origin);
-    if (u.protocol !== "https:" && u.hostname !== "localhost" && u.hostname !== "127.0.0.1") {
-      throw formatStartupFailure("PRODUCTION — FRONTEND_ORIGIN", [
-        "Utilisez https:// sauf pour localhost / 127.0.0.1.",
-      ]);
+  for (const originEntry of config.allowedCorsOrigins) {
+    if (originEntry === "*") {
+      throw formatStartupFailure("PRODUCTION — FRONTEND_ORIGIN invalide", [
+        "Le joker * n’est pas autorisé avec CORS + credentials (cookies).",
+      ], { production: true });
     }
-  } catch (e) {
-    if (e instanceof TypeError) {
-      throw formatStartupFailure("PRODUCTION — FRONTEND_ORIGIN", [
-        `URL invalide : ${origin}`,
-      ]);
+    try {
+      const u = new URL(originEntry);
+      if (u.protocol !== "https:" && u.hostname !== "localhost" && u.hostname !== "127.0.0.1") {
+        throw formatStartupFailure("PRODUCTION — FRONTEND_ORIGIN", [
+          `Utilisez https:// sauf pour localhost / 127.0.0.1 (${originEntry}).`,
+        ], { production: true });
+      }
+    } catch (e) {
+      if (e instanceof TypeError) {
+        throw formatStartupFailure("PRODUCTION — FRONTEND_ORIGIN", [
+          `URL invalide : ${originEntry}`,
+        ], { production: true });
+      }
+      throw e;
     }
-    throw e;
   }
 
   if (!process.env.TURNSTILE_SECRET_KEY?.trim()) {
-    throw formatStartupFailure("PRODUCTION — TURNSTILE_SECRET_KEY manquant", [
-      "La clé secrète Turnstile est obligatoire en production (formulaires et auth).",
-    ]);
+    console.warn(
+      "[env] PRODUCTION : TURNSTILE_SECRET_KEY absent — les formulaires publics n’exigeront pas Turnstile tant que la clé n’est pas définie. Définissez la clé pour la production exposée sur Internet.",
+    );
   }
 }

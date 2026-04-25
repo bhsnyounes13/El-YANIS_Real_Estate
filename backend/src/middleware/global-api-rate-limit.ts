@@ -9,6 +9,9 @@ export const globalApiRateLimiter = rateLimit({
   skip: (req) =>
     req.method === "OPTIONS" ||
     req.path === "/health" ||
+    (req.method === "GET" &&
+      typeof req.originalUrl === "string" &&
+      (req.originalUrl === "/api" || req.originalUrl === "/api/")) ||
     (typeof req.originalUrl === "string" && req.originalUrl.startsWith("/api/health")),
   handler: (_req, res) => {
     res.status(429).json({

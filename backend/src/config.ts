@@ -8,43 +8,82 @@ function stripTrailingSlash(s: string): string {
   return s.replace(/\/$/, "");
 }
 
-/**
- * Origine publique du site (CORS, cookies). En prod : `FRONTEND_ORIGIN` si défini,
- * sinon sur Railway `https://${RAILWAY_PUBLIC_DOMAIN}` quand un domaine public est généré.
- */
-function resolveFrontendOrigin(): string {
-  const explicit = process.env.FRONTEND_ORIGIN?.trim();
-  if (explicit) return stripTrailingSlash(explicit);
+function parseCommaSeparatedOrigins(raw: string): string[] {
+  return raw
+    .split(",")
+    .map((s) => stripTrailingSlash(s.trim()))
+    .filter(Boolean);
+}
 
-  const nodeEnv = process.env.NODE_ENV ?? "development";
-  if (nodeEnv !== "production") {
-    return "http://localhost:8080";
+const NODE_ENV = process.env.NODE_ENV ?? "development";
+
+const rawSameSite = process.env.COOKIE_SAMESITE?.trim().toLowerCase();
+const cookieSameSite: "lax" | "strict" | "none" =
+  rawSameSite === "lax" || rawSameSite === "strict" || rawSameSite === "none"
+    ? rawSameSite
+    : NODE_ENV === "production"
+      ? "none"
+      : "lax";
+/** Avec `sameSite: "none"`, le navigateur exige `Secure: true` (même en dev, sauf repli explicite). */
+const cookieSecure =
+  cookieSameSite === "none"
+    ? process.env.COOKIE_SECURE === "false"
+      ? false
+      : true
+    : process.env.COOKIE_SECURE === "true" ||
+      (NODE_ENV === "production" && process.env.COOKIE_SECURE !== "false");
+
+/**
+ * Origines CORS. `FRONTEND_ORIGIN` peut lister plusieurs origines (ex. `https://a.com,https://www.a.com`)
+ * — séparées par des virgules, sans espace requis.
+ * Sans `FRONTEND_ORIGIN` : en dev, localhost classiques (Vite 5173, etc.) ; en prod, repli Railway (voir avertissements).
+ */
+function resolveAllowedCorsOrigins(): string[] {
+  const explicit = process.env.FRONTEND_ORIGIN?.trim();
+  if (explicit) {
+    return parseCommaSeparatedOrigins(explicit);
+  }
+
+  if (NODE_ENV !== "production") {
+    return [
+      "http://localhost:8080",
+      "http://localhost:5173",
+      "http://127.0.0.1:8080",
+      "http://127.0.0.1:5173",
+    ];
   }
 
   const railway = process.env.RAILWAY_PUBLIC_DOMAIN?.trim();
   if (railway) {
     const host = stripTrailingSlash(railway.replace(/^https?:\/\//i, ""));
-    return `https://${host}`;
+    return [`https://${host}`];
   }
 
-  throw new Error(
-    [
-      "Missing FRONTEND_ORIGIN in production (required for CORS and cookies).",
-      "Set FRONTEND_ORIGIN to your public URL (e.g. https://your-app.up.railway.app),",
-      "or add Public Networking → Generate Domain on this Railway service so RAILWAY_PUBLIC_DOMAIN is set.",
-    ].join("\n"),
+  console.warn(
+    "[config] FRONTEND_ORIGIN et RAILWAY_PUBLIC_DOMAIN absents — CORS : repli sur https://elyanis.com. Définissez FRONTEND_ORIGIN (ex. https://elyanis.com,https://www.elyanis.com) pour la prod.",
   );
+  return ["https://elyanis.com", "https://www.elyanis.com"];
 }
+
+const allowedCorsOrigins = resolveAllowedCorsOrigins();
 
 export const config = {
   /** Port HTTP Express : `PORT` dans l’environnement, sinon 3000. */
   port: Number(process.env.PORT) || 3000,
-  nodeEnv: process.env.NODE_ENV ?? "development",
+  nodeEnv: NODE_ENV,
+  /** Toutes les origines autorisées pour l’en-tête `Origin` (CORS avec credentials). */
+  allowedCorsOrigins,
   /**
-   * Origine exacte du frontend (CORS + cookies). En production : une seule URL, jamais `*`.
-   * Voir `resolveFrontendOrigin` (Railway : repli sur `RAILWAY_PUBLIC_DOMAIN`).
+   * Première origine (compat ; emails, logs). Préférer `allowedCorsOrigins` pour CORS.
    */
-  frontendOrigin: resolveFrontendOrigin(),
+  frontendOrigin: allowedCorsOrigins[0] ?? "http://localhost:8080",
+  /**
+   * Cookie refresh : en prod, front (ex. elyanis.com) et API (Railway) = sites différents →
+   * `COOKIE_SAMESITE` par défaut `none` + `secure: true` (sauf `COOKIE_SECURE=false` pour tests).
+   */
+  cookieSameSite,
+  cookieSecure,
+  cookieDomain: process.env.COOKIE_DOMAIN?.trim() || undefined,
   jwtAccessSecret: () =>
     process.env.NODE_ENV === "test"
       ? "test-access-secret-min-32-chars-long!!"

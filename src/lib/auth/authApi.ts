@@ -24,7 +24,7 @@ function resolveAuthPath(path: string): string {
 function formatAuthFailure(kind: "login" | "register", status: number, bodyError?: string): string {
   if (bodyError) return bodyError;
   if (status === 404) {
-    return "API introuvable (404) : aucune route sur /api/… pour ce domaine. Déployez l’API Node, proxifiez /api/ vers Express (voir docs/HOSTINGER.md), ou définissez VITE_API_URL au build si l’API est sur un autre hôte.";
+    return "API introuvable (404) : l’URL d’API est probablement mal configurée. Définissez VITE_API_URL (sans slash final) au build (voir .env.production.example), recompilez (npm run build) et redéployez le front. Vous pouvez aussi proxyfier /api/ vers l’API (docs/HOSTINGER.md). Test : ouvrez /api/health sur l’hôte cible (ex. l’URL Railway) dans le navigateur.";
   }
   return kind === "login" ? `Échec de la connexion (${status})` : `Échec de l’inscription (${status})`;
 }
