@@ -1,9 +1,9 @@
 /**
  * Client HTTP pour l’API catalogue publique et formulaires.
  *
- * Base d’URL : `import.meta.env.VITE_API_URL` (injectée au **build**), sans slash final. En production,
- * repli : `window.__ELYANIS_API_BASE__` (injecté dans `dist/index.html` au build) si l’`import.meta` est vide.
- * Si tout est vide, requêtes **relatives** `/api/...` (même origine ou proxy dev).
+ * Base d’URL : `import.meta.env.VITE_API_URL` (build), repli : balise **meta** `elyanis-api-base`, puis
+ * `window.__ELYANIS_API_BASE__` (injection dans `dist/index.html` au build), puis hôte connu (elyanis.com).
+ * Si vide : requêtes **relatives** `/api/...` (même origine ou proxy dev).
  *
  * @example
  * // .env / CI : VITE_API_URL=https://api.example.com
@@ -14,6 +14,15 @@
 
 import { getAccessToken } from "@/lib/auth/accessToken";
 
+/**
+ * Dernier recours si l’`import.meta.env` ou `index.html` n’est pas servi (CDN, vieux `dist/`, CSP).
+ * Doit rester aligné sur `.env.production` / variable `VITE_API_URL` de build.
+ */
+const HOST_API_FALLBACK: Readonly<Record<string, string>> = {
+  "elyanis.com": "https://elyanis-backend-standalone-production.up.railway.app",
+  "www.elyanis.com": "https://elyanis-backend-standalone-production.up.railway.app",
+};
+
 declare global {
   interface Window {
     /** Injeté au `vite build` si `VITE_API_URL` est dans `.env.production` (repli si le JS minifié n’embarque pas l’import.meta). */
@@ -21,13 +30,31 @@ declare global {
   }
 }
 
+function normalizeBaseUrl(raw: string | undefined | null): string {
+  return (raw ?? "").trim().replace(/\/$/, "");
+}
+
 /** Retourne la valeur normalisée de `import.meta.env.VITE_API_URL` (sans `/` final), ou `""`. */
 export function getApiBase(): string {
-  const fromEnv = ((import.meta.env.VITE_API_URL as string | undefined) ?? "").trim().replace(/\/$/, "");
+  const fromEnv = normalizeBaseUrl(import.meta.env.VITE_API_URL as string | undefined);
   if (fromEnv) return fromEnv;
-  if (import.meta.env.PROD && typeof window !== "undefined" && window.__ELYANIS_API_BASE__?.trim()) {
-    return window.__ELYANIS_API_BASE__.trim().replace(/\/$/, "");
+
+  if (import.meta.env.PROD && typeof document !== "undefined") {
+    const fromMeta = normalizeBaseUrl(
+      document.querySelector('meta[name="elyanis-api-base"]')?.getAttribute("content") ?? undefined,
+    );
+    if (fromMeta) return fromMeta;
   }
+
+  if (import.meta.env.PROD && typeof window !== "undefined" && window.__ELYANIS_API_BASE__?.trim()) {
+    return normalizeBaseUrl(window.__ELYANIS_API_BASE__);
+  }
+
+  if (import.meta.env.PROD && typeof location !== "undefined") {
+    const byHost = HOST_API_FALLBACK[location.hostname];
+    if (byHost) return byHost;
+  }
+
   return "";
 }
 

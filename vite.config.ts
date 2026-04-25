@@ -51,11 +51,13 @@ export default defineConfig(({ mode }) => {
           const e = loadEnv("production", process.cwd(), "VITE_");
           const base = (e.VITE_API_URL ?? "").trim().replace(/\/$/, "");
           if (!base) return html;
+          const contentEsc = base.replaceAll("&", "&amp;").replaceAll('"', "&quot;");
+          const meta = `<meta name="elyanis-api-base" content="${contentEsc}" />`;
           const script = `<script>window.__ELYANIS_API_BASE__=${JSON.stringify(base)}<\/script>`;
           if (html.includes("<head>")) {
-            return html.replace("<head>", `<head>\n    ${script}`);
+            return html.replace("<head>", `<head>\n    ${meta}\n    ${script}`);
           }
-          return script + html;
+          return meta + script + html;
         },
       },
     ],
