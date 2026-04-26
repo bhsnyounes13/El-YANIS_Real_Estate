@@ -59,6 +59,7 @@ import { useAdminAgents } from "@/hooks/admin/useAdminAgents";
 import { useAdminInquiries } from "@/hooks/admin/useAdminInquiries";
 import { useAdminPropertyCatalog } from "@/hooks/admin/useAdminPropertyCatalog";
 import { useToast } from "@/hooks/use-toast";
+import { getApiUserMessage } from "@/lib/api/mapApiUserMessage";
 import { useAuth } from "@/lib/auth/AuthContext";
 import type { AgentWriteInput } from "@/lib/api/services/adminApi.service";
 import type { Agent } from "@/lib/domain/types";
@@ -271,10 +272,10 @@ const AdminShell = () => {
         toast({ title: "Bien créé" });
         setFormOpen(false);
       },
-      onError: () =>
+      onError: (err) =>
         toast({
           title: "Erreur",
-          description: "ID déjà utilisé ou données invalides.",
+          description: getApiUserMessage(err, "Données invalides."),
           variant: "destructive",
         }),
     });
@@ -286,7 +287,12 @@ const AdminShell = () => {
         toast({ title: "Bien enregistré" });
         setFormOpen(false);
       },
-      onError: () => toast({ title: "Erreur", variant: "destructive" }),
+      onError: (err) =>
+        toast({
+          title: "Erreur",
+          description: getApiUserMessage(err, "Impossible d’enregistrer ce bien."),
+          variant: "destructive",
+        }),
     });
   };
 
