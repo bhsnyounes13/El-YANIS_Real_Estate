@@ -1,45 +1,54 @@
 import { z } from "zod";
 import type { BookedRange, Property, PropertyTag } from "@/lib/domain/types";
 
+const optionalText = z
+  .string()
+  .optional()
+  .transform((value) => value?.trim() || "");
+
+const optionalPositiveNumber = z
+  .union([z.coerce.number().nonnegative(), z.literal(""), z.undefined()])
+  .transform((value) => (value === "" || value === undefined ? 0 : Number(value)));
+
 export const propertyFormSchema = z.object({
-  title_en: z.string().min(2),
-  title_fr: z.string().min(2),
-  title_ar: z.string().min(2),
-  description_en: z.string().min(10),
-  description_fr: z.string().min(10),
-  description_ar: z.string().min(10),
+  title: z.string().min(2, "Le titre est requis."),
+  title_en: optionalText,
+  title_ar: optionalText,
+  description: optionalText,
+  description_en: optionalText,
+  description_ar: optionalText,
   type: z.enum(["sale", "rent"]),
-  price: z.coerce.number().positive(),
+  price: z.coerce.number().positive("Le prix est requis."),
   city: z.enum(["tlemcen", "ainTemouchent", "sidiBelAbbes"]),
-  bedrooms: z.coerce.number().int().min(0),
-  bathrooms: z.coerce.number().int().min(0),
-  area: z.coerce.number().positive(),
+  bedrooms: optionalPositiveNumber,
+  bathrooms: optionalPositiveNumber,
+  area: optionalPositiveNumber,
   images: z.array(z.string().min(1)).min(1, "Ajoutez au moins une photo."),
-  amenitiesText: z.string(),
-  agent_id: z.string().min(1),
-  featured: z.boolean(),
-  tag_exclusive: z.boolean(),
-  tag_new: z.boolean(),
-  tag_featured: z.boolean(),
+  amenitiesText: z.string().default(""),
+  agent_id: z.string().optional(),
+  featured: z.boolean().default(false),
+  tag_exclusive: z.boolean().default(false),
+  tag_new: z.boolean().default(false),
+  tag_featured: z.boolean().default(false),
   bookedDatesJson: z.string().optional(),
 });
 
 export type PropertyFormValues = z.infer<typeof propertyFormSchema>;
 
 const emptyForm: PropertyFormValues = {
+  title: "",
   title_en: "",
-  title_fr: "",
   title_ar: "",
+  description: "",
   description_en: "",
-  description_fr: "",
   description_ar: "",
   type: "sale",
   price: 1,
   city: "tlemcen",
-  bedrooms: 1,
-  bathrooms: 1,
-  area: 50,
-  images: [] as string[],
+  bedrooms: 0,
+  bathrooms: 0,
+  area: 0,
+  images: [],
   amenitiesText: "",
   agent_id: "",
   featured: false,
@@ -64,6 +73,14 @@ function parseBookedDates(json: string | undefined): BookedRange[] | undefined {
   }
 }
 
+function fallbackTitle(property: Property): string {
+  return property.title_fr || property.title_en || property.title_ar || "";
+}
+
+function fallbackDescription(property: Property): string {
+  return property.description_fr || property.description_en || property.description_ar || "";
+}
+
 export function formValuesToProperty(
   values: PropertyFormValues,
   id: string,
@@ -83,23 +100,26 @@ export function formValuesToProperty(
     values.type === "rent" ? parseBookedDates(values.bookedDatesJson) : undefined;
   const bookedDates = bookedFromForm ?? preserve?.bookedDates;
 
+  const normalizedTitle = values.title.trim();
+  const normalizedDescription = values.description.trim();
+
   return {
     id,
-    title_en: values.title_en,
-    title_fr: values.title_fr,
-    title_ar: values.title_ar,
-    description_en: values.description_en,
-    description_fr: values.description_fr,
-    description_ar: values.description_ar,
+    title_fr: normalizedTitle,
+    title_en: values.title_en || normalizedTitle,
+    title_ar: values.title_ar || normalizedTitle,
+    description_fr: normalizedDescription,
+    description_en: values.description_en || normalizedDescription,
+    description_ar: values.description_ar || normalizedDescription,
     type: values.type,
     price: values.price,
     city: values.city,
     bedrooms: values.bedrooms,
     bathrooms: values.bathrooms,
     area: values.area,
-    images: images.length > 0 ? images : [],
+    images,
     amenities,
-    agent_id: values.agent_id,
+    agent_id: values.agent_id || undefined,
     featured: values.featured,
     tags: tags.length > 0 ? tags : undefined,
     bookedDates,
@@ -108,12 +128,12 @@ export function formValuesToProperty(
 
 export function propertyToFormValues(p: Property): PropertyFormValues {
   return {
-    title_en: p.title_en,
-    title_fr: p.title_fr,
-    title_ar: p.title_ar,
-    description_en: p.description_en,
-    description_fr: p.description_fr,
-    description_ar: p.description_ar,
+    title: fallbackTitle(p),
+    title_en: p.title_en || "",
+    title_ar: p.title_ar || "",
+    description: fallbackDescription(p),
+    description_en: p.description_en || "",
+    description_ar: p.description_ar || "",
     type: p.type,
     price: p.price,
     city: p.city,
@@ -122,7 +142,7 @@ export function propertyToFormValues(p: Property): PropertyFormValues {
     area: p.area,
     images: [...p.images],
     amenitiesText: p.amenities.join(", "),
-    agent_id: p.agent_id,
+    agent_id: p.agent_id || "",
     featured: Boolean(p.featured),
     tag_exclusive: p.tags?.includes("exclusive") ?? false,
     tag_new: p.tags?.includes("new") ?? false,

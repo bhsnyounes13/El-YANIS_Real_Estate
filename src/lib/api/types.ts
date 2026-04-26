@@ -1,6 +1,7 @@
 export type {
   Property,
   Agent,
+  AgentStatus,
   ServiceItem,
   ContactInquiryInput,
   PropertyInquiryInput,
@@ -40,6 +41,13 @@ export interface AgentApiDto {
   photo?: string;
   phone?: string;
   email?: string;
+  whatsapp?: string;
+  position?: string;
+  agency_name?: string;
+  facebook?: string;
+  instagram?: string;
+  linkedin?: string;
+  status?: "active" | "inactive";
   bio_en?: string;
   bio_fr?: string;
   bio_ar?: string;

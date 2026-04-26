@@ -4,6 +4,7 @@ import {
   Building2,
   ChevronRight,
   Download,
+  Eye,
   Home,
   LogOut,
   LayoutDashboard,
@@ -54,12 +55,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { useAdminAgents } from "@/hooks/admin/useAdminAgents";
 import { useAdminInquiries } from "@/hooks/admin/useAdminInquiries";
 import { useAdminPropertyCatalog } from "@/hooks/admin/useAdminPropertyCatalog";
-import { useAgents } from "@/hooks/queries/useAgents";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth/AuthContext";
+import type { AgentWriteInput } from "@/lib/api/services/adminApi.service";
+import type { Agent } from "@/lib/domain/types";
 import type { Property } from "@/lib/domain/types";
+import AgentFormDialog from "./AgentFormDialog";
 import PropertyFormDialog from "./PropertyFormDialog";
 
 type MenuKey = "overview" | "properties" | "inquiries" | "agents" | "settings";
@@ -140,6 +144,12 @@ const AdminShell = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [editing, setEditing] = useState<Property | null>(null);
+  const [agentDialogOpen, setAgentDialogOpen] = useState(false);
+  const [agentDialogMode, setAgentDialogMode] = useState<"create" | "edit" | "view">("create");
+  const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
+  const [deleteAgentId, setDeleteAgentId] = useState<string | null>(null);
+  const [agentQuery, setAgentQuery] = useState("");
+  const [agentStatusFilter, setAgentStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [deletePropertyId, setDeletePropertyId] = useState<string | null>(null);
   const [deleteInquiry, setDeleteInquiry] = useState<{
     kind: "contact" | "property";
@@ -157,10 +167,11 @@ const AdminShell = () => {
     exportCatalogJson,
   } = useAdminPropertyCatalog();
   const { query: inqQuery, remove: removeInq } = useAdminInquiries();
-  const agentsQ = useAgents();
+  const adminAgents = useAdminAgents();
 
   const properties = useMemo(() => propQuery.data ?? [], [propQuery.data]);
   const inquiries = useMemo(() => inqQuery.data ?? [], [inqQuery.data]);
+  const agents = useMemo(() => adminAgents.query.data ?? [], [adminAgents.query.data]);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -184,8 +195,24 @@ const AdminShell = () => {
       rent,
       featured,
       inquiries: inquiries.length,
+      agents: agents.length,
     };
-  }, [properties, inquiries]);
+  }, [properties, inquiries, agents]);
+
+  const filteredAgents = useMemo(() => {
+    const q = agentQuery.toLowerCase().trim();
+    return agents.filter((agent) => {
+      if (agentStatusFilter !== "all" && (agent.status ?? "active") !== agentStatusFilter) {
+        return false;
+      }
+      if (!q) return true;
+      return (
+        agent.name.toLowerCase().includes(q) ||
+        (agent.phone ?? "").toLowerCase().includes(q) ||
+        (agent.email ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [agents, agentQuery, agentStatusFilter]);
 
   const pieType = useMemo(
     () => [
@@ -220,6 +247,24 @@ const AdminShell = () => {
     setFormOpen(true);
   };
 
+  const openCreateAgent = () => {
+    setAgentDialogMode("create");
+    setEditingAgent(null);
+    setAgentDialogOpen(true);
+  };
+
+  const openViewAgent = (agent: Agent) => {
+    setAgentDialogMode("view");
+    setEditingAgent(agent);
+    setAgentDialogOpen(true);
+  };
+
+  const openEditAgent = (agent: Agent) => {
+    setAgentDialogMode("edit");
+    setEditingAgent(agent);
+    setAgentDialogOpen(true);
+  };
+
   const handleCreate = (p: Property) => {
     create.mutate(p, {
       onSuccess: () => {
@@ -245,6 +290,41 @@ const AdminShell = () => {
     });
   };
 
+  const handleAgentSubmit = (payload: AgentWriteInput) => {
+    if (agentDialogMode === "create") {
+      adminAgents.create.mutate(payload, {
+        onSuccess: () => {
+          toast({ title: "Agent créé" });
+          setAgentDialogOpen(false);
+        },
+        onError: (err) =>
+          toast({
+            title: "Erreur",
+            description: err instanceof Error ? err.message : undefined,
+            variant: "destructive",
+          }),
+      });
+      return;
+    }
+    if (!editingAgent) return;
+    adminAgents.update.mutate(
+      { id: editingAgent.id, payload },
+      {
+        onSuccess: () => {
+          toast({ title: "Agent enregistré" });
+          setAgentDialogOpen(false);
+          setEditingAgent(null);
+        },
+        onError: (err) =>
+          toast({
+            title: "Erreur",
+            description: err instanceof Error ? err.message : undefined,
+            variant: "destructive",
+          }),
+      },
+    );
+  };
+
   const confirmDeleteProperty = () => {
     if (!deletePropertyId) return;
     remove.mutate(deletePropertyId, {
@@ -266,6 +346,22 @@ const AdminShell = () => {
         },
       },
     );
+  };
+
+  const confirmDeleteAgent = () => {
+    if (!deleteAgentId) return;
+    adminAgents.remove.mutate(deleteAgentId, {
+      onSuccess: () => {
+        toast({ title: "Agent supprimé" });
+        setDeleteAgentId(null);
+      },
+      onError: (err) =>
+        toast({
+          title: "Suppression impossible",
+          description: err instanceof Error ? err.message : undefined,
+          variant: "destructive",
+        }),
+    });
   };
 
   const doExportCatalog = () => {
@@ -315,7 +411,7 @@ const AdminShell = () => {
 
   const overview = (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Biens publiés</CardDescription>
@@ -344,6 +440,12 @@ const AdminShell = () => {
           <CardHeader className="pb-2">
             <CardDescription>Demandes (API)</CardDescription>
             <CardTitle className="text-3xl tabular-nums">{stats.inquiries}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Agents</CardDescription>
+            <CardTitle className="text-3xl tabular-nums">{stats.agents}</CardTitle>
           </CardHeader>
         </Card>
       </div>
@@ -562,28 +664,106 @@ const AdminShell = () => {
   );
 
   const agentsSection = (
-    <div className="grid gap-4 md:grid-cols-2">
-      {(agentsQ.data ?? []).map((a) => (
-        <Card key={a.id}>
-          <CardHeader>
-            <CardTitle className="text-lg">{a.name}</CardTitle>
-            <CardDescription>{a.email}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              <span className="text-muted-foreground">Tél. </span>
-              <a
-                href={`tel:${a.phone.replace(/\s/g, "")}`}
-                className="text-primary underline-offset-4 hover:underline"
+    <Card>
+      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <CardTitle>Agents</CardTitle>
+          <CardDescription>Créer, modifier, désactiver ou supprimer des agents.</CardDescription>
+        </div>
+        <Button onClick={openCreateAgent}>
+          <Plus className="mr-2 h-4 w-4" />
+          Nouvel agent
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-col gap-2 md:flex-row">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher nom, téléphone, email…"
+              className="ps-9"
+              value={agentQuery}
+              onChange={(e) => setAgentQuery(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
+            {(["all", "active", "inactive"] as const).map((status) => (
+              <Button
+                key={status}
+                type="button"
+                variant={agentStatusFilter === status ? "default" : "outline"}
+                onClick={() => setAgentStatusFilter(status)}
               >
-                {a.phone}
-              </a>
-            </p>
-            <p className="text-muted-foreground line-clamp-3">{a.bio_fr}</p>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+                {status === "all" ? "Tous" : status === "active" ? "Actifs" : "Inactifs"}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {adminAgents.query.isLoading ? (
+          <p className="text-sm text-muted-foreground">Chargement des agents…</p>
+        ) : adminAgents.query.isError ? (
+          <p className="text-sm text-destructive">
+            Erreur de chargement des agents :{" "}
+            {adminAgents.query.error instanceof Error ? adminAgents.query.error.message : "inconnue"}
+          </p>
+        ) : filteredAgents.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-8 text-center">
+            <p className="font-medium">No agents yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">Commencez par créer le premier agent.</p>
+            <Button className="mt-4" onClick={openCreateAgent}>
+              Créer un agent
+            </Button>
+          </div>
+        ) : (
+          <ScrollArea className="w-full">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Téléphone</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead className="text-end">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAgents.map((agent) => (
+                  <TableRow key={agent.id}>
+                    <TableCell className="font-medium">{agent.name}</TableCell>
+                    <TableCell>{agent.phone}</TableCell>
+                    <TableCell className="text-muted-foreground">{agent.email || "—"}</TableCell>
+                    <TableCell>
+                      <Badge variant={agent.status === "inactive" ? "secondary" : "default"}>
+                        {agent.status === "inactive" ? "Inactif" : "Actif"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-end">
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => openViewAgent(agent)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => openEditAgent(agent)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive"
+                          onClick={() => setDeleteAgentId(agent.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+        )}
+      </CardContent>
+    </Card>
   );
 
   const settingsSection = (
@@ -713,6 +893,15 @@ const AdminShell = () => {
         isSubmitting={create.isPending || update.isPending}
       />
 
+      <AgentFormDialog
+        open={agentDialogOpen}
+        onOpenChange={setAgentDialogOpen}
+        mode={agentDialogMode}
+        initial={editingAgent}
+        isSubmitting={adminAgents.create.isPending || adminAgents.update.isPending}
+        onSubmit={handleAgentSubmit}
+      />
+
       <AlertDialog open={Boolean(deletePropertyId)} onOpenChange={() => setDeletePropertyId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -743,6 +932,26 @@ const AdminShell = () => {
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={confirmDeleteInquiry}
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={Boolean(deleteAgentId)} onOpenChange={() => setDeleteAgentId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cet agent ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Les biens liés conserveront leurs données sans agent.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={confirmDeleteAgent}
             >
               Supprimer
             </AlertDialogAction>

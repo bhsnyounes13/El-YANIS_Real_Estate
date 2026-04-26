@@ -14,7 +14,15 @@ export function PropertyGallery({ images, title, className }: PropertyGalleryPro
   const prev = () => setCurrent((i) => (i === 0 ? images.length - 1 : i - 1));
   const next = () => setCurrent((i) => (i === images.length - 1 ? 0 : i + 1));
 
-  if (images.length === 0) return null;
+  if (images.length === 0) {
+    return (
+      <div className={cn("space-y-4", className)}>
+        <div className="relative overflow-hidden rounded-3xl bg-surface-container">
+          <LazyImage src={null} alt="" className="aspect-[4/5] w-full object-cover object-center" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -22,7 +30,7 @@ export function PropertyGallery({ images, title, className }: PropertyGalleryPro
         <LazyImage
           src={images[current]}
           alt={`${title} — ${current + 1}`}
-          className="aspect-[16/10] w-full object-cover md:aspect-[21/9]"
+          className="aspect-[4/5] w-full object-cover object-center"
         />
         {images.length > 1 && (
           <>

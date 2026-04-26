@@ -17,7 +17,11 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   const { language, t } = useLanguage();
   const isRent = property.type === "rent";
 
-  const title = property[`title_${language}` as keyof Property] as string;
+  const title =
+    (property[`title_${language}` as keyof Property] as string) ||
+    property.title_fr ||
+    property.title_en ||
+    property.title_ar;
   const cityKey = `city.${property.city}`;
 
   const formatPrice = (price: number) =>
@@ -39,12 +43,12 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
       )}
       data-variant={property.type}
     >
-      {/* Image plein cadre — format paysage type annonce réseaux */}
-      <div className="relative aspect-[16/10] min-h-[200px] w-full bg-neutral-900">
+      <div className="relative aspect-[4/5] min-h-[250px] w-full bg-neutral-900">
         <LazyImage
           src={property.images[0]}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+          emptyLabel="Aucune photo"
+          className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.02]"
         />
         {/* Dégradé bas pour lisibilité du texte blanc */}
         <div

@@ -23,7 +23,6 @@ function isPropertyLike(v: unknown): v is Property {
   return (
     typeof o.title_en === "string" &&
     typeof o.title_fr === "string" &&
-    typeof o.agent_id === "string" &&
     Array.isArray(o.images)
   );
 }

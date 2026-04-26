@@ -4,9 +4,9 @@
 
 import { ApiError, apiDeleteAuth, apiGetAuth, apiPatchAuth, apiPostAuth } from "@/lib/api/client";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
-import { mapPropertyFromApi } from "@/lib/api/mappers";
-import type { PropertyApiDto } from "@/lib/api/types";
-import type { Property } from "@/lib/domain/types";
+import { mapAgentFromApi, mapPropertyFromApi } from "@/lib/api/mappers";
+import type { AgentApiDto, PropertyApiDto } from "@/lib/api/types";
+import type { Agent, Property } from "@/lib/domain/types";
 
 /** Corps POST/PATCH attendu par le backend (camelCase booleans où applicable). */
 export function propertyToApiWriteBody(p: Property): Record<string, unknown> {
@@ -28,7 +28,7 @@ export function propertyToApiWriteBody(p: Property): Record<string, unknown> {
     bookedDates: p.bookedDates ?? undefined,
     featured: Boolean(p.featured),
     tags: p.tags ?? undefined,
-    agent_id: p.agent_id,
+    agent_id: p.agent_id ?? undefined,
   };
 }
 
@@ -58,6 +58,67 @@ export async function adminUpdateProperty(p: Property): Promise<Property> {
 
 export async function adminDeleteProperty(id: string): Promise<void> {
   await apiDeleteAuth(API_ENDPOINTS.property(id));
+}
+
+export interface AgentWriteInput {
+  name: string;
+  phone: string;
+  email?: string;
+  whatsapp?: string;
+  photo?: string;
+  position?: string;
+  bio_en?: string;
+  bio_fr?: string;
+  bio_ar?: string;
+  agency_name?: string;
+  facebook?: string;
+  instagram?: string;
+  linkedin?: string;
+  status?: "active" | "inactive";
+}
+
+function agentToApiWriteBody(agent: AgentWriteInput): Record<string, unknown> {
+  return {
+    name: agent.name.trim(),
+    phone: agent.phone.trim(),
+    email: agent.email?.trim() || undefined,
+    whatsapp: agent.whatsapp?.trim() || undefined,
+    photo: agent.photo?.trim() || undefined,
+    position: agent.position?.trim() || undefined,
+    bio_en: agent.bio_en?.trim() || undefined,
+    bio_fr: agent.bio_fr?.trim() || undefined,
+    bio_ar: agent.bio_ar?.trim() || undefined,
+    agency_name: agent.agency_name?.trim() || undefined,
+    facebook: agent.facebook?.trim() || undefined,
+    instagram: agent.instagram?.trim() || undefined,
+    linkedin: agent.linkedin?.trim() || undefined,
+    status: agent.status === "inactive" ? "inactive" : "active",
+  };
+}
+
+export async function adminListAgents(): Promise<Agent[]> {
+  const raw = await apiGetAuth<AgentApiDto[]>(API_ENDPOINTS.agents);
+  if (!Array.isArray(raw)) {
+    throw new ApiError("Réponse invalide : liste d’agents attendue", 500);
+  }
+  return raw.map(mapAgentFromApi);
+}
+
+export async function adminCreateAgent(agent: AgentWriteInput): Promise<Agent> {
+  const raw = await apiPostAuth<AgentApiDto>(API_ENDPOINTS.agents, agentToApiWriteBody(agent));
+  return mapAgentFromApi(raw);
+}
+
+export async function adminUpdateAgent(id: string, agent: AgentWriteInput): Promise<Agent> {
+  const raw = await apiPatchAuth<AgentApiDto>(
+    `${API_ENDPOINTS.agents}/${encodeURIComponent(id)}`,
+    agentToApiWriteBody(agent),
+  );
+  return mapAgentFromApi(raw);
+}
+
+export async function adminDeleteAgent(id: string): Promise<void> {
+  await apiDeleteAuth(`${API_ENDPOINTS.agents}/${encodeURIComponent(id)}`);
 }
 
 export interface AdminInquiryApiRow {

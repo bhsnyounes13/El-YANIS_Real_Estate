@@ -25,21 +25,30 @@ export interface Property {
   area: number;
   images: string[];
   amenities: string[];
-  agent_id: string;
+  agent_id?: string;
   bookedDates?: BookedRange[];
   featured?: boolean;
   tags?: PropertyTag[];
 }
 
+export type AgentStatus = "active" | "inactive";
+
 export interface Agent {
   id: string;
   name: string;
-  photo: string;
+  photo?: string;
   phone: string;
-  email: string;
-  bio_en: string;
-  bio_fr: string;
-  bio_ar: string;
+  email?: string;
+  whatsapp?: string;
+  position?: string;
+  agency_name?: string;
+  facebook?: string;
+  instagram?: string;
+  linkedin?: string;
+  status?: AgentStatus;
+  bio_en?: string;
+  bio_fr?: string;
+  bio_ar?: string;
 }
 
 export interface ServiceItem {

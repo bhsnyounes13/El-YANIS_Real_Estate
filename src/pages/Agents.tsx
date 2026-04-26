@@ -50,17 +50,23 @@ const Agents = () => {
           ) : (
             <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
               {agents.map((agent) => {
-                const bio = agent[`bio_${language}` as keyof typeof agent] as string;
+                const bio = (agent[`bio_${language}` as keyof typeof agent] as string) || "";
                 return (
                   <div
                     key={agent.id}
                     className="luminous-card-quiet flex flex-col p-8 text-center md:p-10"
                   >
-                    <img
-                      src={agent.photo}
-                      alt={agent.name}
-                      className="mx-auto h-28 w-28 rounded-3xl object-cover ring-1 ring-outline-variant/30"
-                    />
+                    {agent.photo ? (
+                      <img
+                        src={agent.photo}
+                        alt={agent.name}
+                        className="mx-auto h-28 w-28 rounded-3xl object-cover ring-1 ring-outline-variant/30"
+                      />
+                    ) : (
+                      <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-3xl bg-surface-container text-sm text-muted-foreground ring-1 ring-outline-variant/30">
+                        Photo
+                      </div>
+                    )}
                     <h3 className="mt-6 font-heading text-xl font-semibold tracking-[-0.02em]">
                       {agent.name}
                     </h3>
@@ -77,12 +83,14 @@ const Agents = () => {
                       >
                         <Phone className="h-4 w-4 text-primary" /> {agent.phone}
                       </a>
-                      <a
-                        href={`mailto:${agent.email}`}
-                        className="flex items-center justify-center gap-2 rounded-2xl bg-surface-container px-4 py-2.5 text-sm transition hover:bg-muted"
-                      >
-                        <Mail className="h-4 w-4 text-primary" /> {agent.email}
-                      </a>
+                      {agent.email ? (
+                        <a
+                          href={`mailto:${agent.email}`}
+                          className="flex items-center justify-center gap-2 rounded-2xl bg-surface-container px-4 py-2.5 text-sm transition hover:bg-muted"
+                        >
+                          <Mail className="h-4 w-4 text-primary" /> {agent.email}
+                        </a>
+                      ) : null}
                     </div>
                   </div>
                 );

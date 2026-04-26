@@ -28,7 +28,7 @@ export function mapPropertyFromApi(dto: PropertyApiDto): Property {
     area: Number(dto.area ?? 0),
     images: Array.isArray(dto.images) ? dto.images : [],
     amenities: Array.isArray(dto.amenities) ? dto.amenities : [],
-    agent_id: String(dto.agent_id ?? dto.agentId ?? ""),
+    agent_id: dto.agent_id ?? dto.agentId ?? undefined,
     bookedDates: booked,
     featured: Boolean(dto.featured),
     tags: dto.tags,
@@ -39,12 +39,19 @@ export function mapAgentFromApi(dto: AgentApiDto): Agent {
   return {
     id: String(dto.id),
     name: dto.name ?? "",
-    photo: dto.photo ?? "",
+    photo: dto.photo ?? undefined,
     phone: dto.phone ?? "",
-    email: dto.email ?? "",
-    bio_en: dto.bio_en ?? "",
-    bio_fr: dto.bio_fr ?? "",
-    bio_ar: dto.bio_ar ?? "",
+    email: dto.email ?? undefined,
+    whatsapp: dto.whatsapp ?? undefined,
+    position: dto.position ?? undefined,
+    agency_name: dto.agency_name ?? undefined,
+    facebook: dto.facebook ?? undefined,
+    instagram: dto.instagram ?? undefined,
+    linkedin: dto.linkedin ?? undefined,
+    status: dto.status === "inactive" ? "inactive" : "active",
+    bio_en: dto.bio_en ?? undefined,
+    bio_fr: dto.bio_fr ?? undefined,
+    bio_ar: dto.bio_ar ?? undefined,
   };
 }
 

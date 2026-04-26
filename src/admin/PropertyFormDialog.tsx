@@ -1,7 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CheckCircle2, ChevronLeft, ChevronRight, Rocket } from "lucide-react";
 import { useAgents } from "@/hooks/queries/useAgents";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -15,7 +17,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { Property } from "@/lib/domain/types";
+import { cn } from "@/lib/utils";
 import PropertyPhotosField from "./PropertyPhotosField";
 import {
   getEmptyPropertyForm,
@@ -45,6 +47,16 @@ const cityLabels: Record<PropertyFormValues["city"], string> = {
   ainTemouchent: "Aïn Témouchent",
   sidiBelAbbes: "Sidi Bel Abbès",
 };
+
+const essentialFieldNames: (keyof PropertyFormValues)[] = [
+  "title",
+  "type",
+  "price",
+  "city",
+  "images",
+];
+
+type FormStep = "basic" | "photos" | "optional" | "preview";
 
 interface PropertyFormDialogProps {
   open: boolean;
@@ -66,14 +78,24 @@ const PropertyFormDialog = ({
   isSubmitting,
 }: PropertyFormDialogProps) => {
   const { data: agentList = [] } = useAgents();
+  const [quickMode, setQuickMode] = useState(true);
+  const [step, setStep] = useState<FormStep>("basic");
+  const [submitMode, setSubmitMode] = useState<"draft" | "publish">("publish");
+  const submitModeRef = useRef<"draft" | "publish">("publish");
 
   const form = useForm<PropertyFormValues>({
     resolver: zodResolver(propertyFormSchema),
     defaultValues: getEmptyPropertyForm(),
   });
 
+  const values = form.watch();
+
   useEffect(() => {
     if (!open) return;
+    setStep("basic");
+    setSubmitMode("publish");
+    submitModeRef.current = "publish";
+    setQuickMode(mode === "create");
     if (mode === "edit" && initial) {
       form.reset(propertyToFormValues(initial));
     } else {
@@ -81,115 +103,160 @@ const PropertyFormDialog = ({
     }
   }, [open, mode, initial, form]);
 
-  useEffect(() => {
-    if (!open || mode !== "create" || agentList.length === 0) return;
-    const cur = form.getValues("agent_id");
-    if (!cur || !agentList.some((a) => a.id === cur)) {
-      form.setValue("agent_id", agentList[0]!.id);
-    }
-  }, [open, mode, agentList, form]);
+  const steps = useMemo<FormStep[]>(
+    () => (quickMode ? ["basic", "photos", "preview"] : ["basic", "photos", "optional", "preview"]),
+    [quickMode],
+  );
 
-  const onSubmit = (values: PropertyFormValues) => {
+  const stepIndex = steps.indexOf(step);
+  const canGoBack = stepIndex > 0;
+  const canGoForward = stepIndex < steps.length - 1;
+
+  const titlePreview = values.title?.trim() || "Titre non renseigné";
+
+  const goForward = async () => {
+    const current = steps[stepIndex];
+    if (!current) return;
+    if (current === "basic") {
+      const ok = await form.trigger(["title", "type", "price", "city"]);
+      if (!ok) return;
+    }
+    if (current === "photos") {
+      const ok = await form.trigger(["images"]);
+      if (!ok) return;
+    }
+    if (canGoForward) {
+      setStep(steps[stepIndex + 1]!);
+    }
+  };
+
+  const goBack = () => {
+    if (!canGoBack) return;
+    setStep(steps[stepIndex - 1]!);
+  };
+
+  const onSubmit = (rawValues: PropertyFormValues) => {
     const id = mode === "edit" && initial ? initial.id : crypto.randomUUID();
     const preserve = mode === "edit" && initial ? { bookedDates: initial.bookedDates } : undefined;
-    const property = formValuesToProperty(values, id, preserve);
+    const valuesToSave =
+      submitModeRef.current === "draft"
+        ? { ...rawValues, featured: false, tag_exclusive: false, tag_featured: false }
+        : rawValues;
+    const property = formValuesToProperty(valuesToSave, id, preserve);
     if (mode === "create") onCreate(property);
     else onUpdate(property);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(92vh,800px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[640px]">
+      <DialogContent className="flex max-h-[min(92vh,860px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[680px]">
         <DialogHeader className="shrink-0 border-b px-6 py-4 text-start">
-          <DialogTitle>{mode === "create" ? "Nouveau bien" : "Modifier le bien"}</DialogTitle>
+          <DialogTitle>{mode === "create" ? "Uploads des biens" : "Modifier le bien"}</DialogTitle>
           <DialogDescription>
-            Données trilingues enregistrées sur le serveur via l’API (création et modification
-            réservées aux administrateurs).
+            Création rapide : uniquement les champs essentiels sont requis.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="flex min-h-0 flex-1 flex-col overflow-hidden"
-          >
-            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-6 [-webkit-overflow-scrolling:touch]">
-              <div className="space-y-4 py-4 pe-1">
-                <div className="grid gap-3 sm:grid-cols-3">
-                  {(["title_en", "title_fr", "title_ar"] as const).map((name) => (
-                    <FormField
-                      key={name}
-                      control={form.control}
-                      name={name}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs uppercase tracking-wide">
-                            {name === "title_en"
-                              ? "Titre EN"
-                              : name === "title_fr"
-                                ? "Titre FR"
-                                : "Titre AR"}
-                          </FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="border-b px-6 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap gap-2">
+                  {steps.map((key, index) => (
+                    <Badge
+                      key={key}
+                      variant={step === key ? "default" : "secondary"}
+                      className={cn("capitalize", step === key && "shadow-sm")}
+                    >
+                      {index + 1}.{" "}
+                      {key === "basic"
+                        ? "Infos"
+                        : key === "photos"
+                          ? "Photos"
+                          : key === "optional"
+                            ? "Optionnel"
+                            : "Aperçu"}
+                    </Badge>
                   ))}
                 </div>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  {(["description_en", "description_fr", "description_ar"] as const).map((name) => (
-                    <FormField
-                      key={name}
-                      control={form.control}
-                      name={name}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs uppercase tracking-wide">
-                            {name === "description_en"
-                              ? "Desc. EN"
-                              : name === "description_fr"
-                                ? "Desc. FR"
-                                : "Desc. AR"}
-                          </FormLabel>
-                          <FormControl>
-                            <Textarea className="min-h-[88px]" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                  <Checkbox checked={quickMode} onCheckedChange={(v) => setQuickMode(Boolean(v))} />
+                  <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                    <Rocket className="h-3.5 w-3.5" />
+                    Mode rapide
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-6 py-4">
+              {step === "basic" && (
+                <div className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="type"
+                    name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Type</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="sale">Vente</SelectItem>
-                            <SelectItem value="rent">Location</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>Titre *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: Appartement F4 lumineux au centre-ville" {...field} />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Transaction *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="sale">Vente</SelectItem>
+                              <SelectItem value="rent">Location</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ville *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {(Object.keys(cityLabels) as PropertyFormValues["city"][]).map((k) => (
+                                <SelectItem key={k} value={k}>
+                                  {cityLabels[k]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <FormField
                     control={form.control}
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Prix (DZD)</FormLabel>
+                        <FormLabel>Prix (DZD) *</FormLabel>
                         <FormControl>
                           <Input type="number" min={1} step={1} {...field} />
                         </FormControl>
@@ -198,44 +265,88 @@ const PropertyFormDialog = ({
                     )}
                   />
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
+              )}
+
+              {step === "photos" && (
+                <div className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="city"
+                    name="images"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Ville</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {(Object.keys(cityLabels) as PropertyFormValues["city"][]).map((k) => (
-                              <SelectItem key={k} value={k}>
-                                {cityLabels[k]}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>Photos du bien *</FormLabel>
+                        <PropertyPhotosField value={field.value} onChange={field.onChange} disabled={isSubmitting} />
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    La première image est utilisée comme couverture automatiquement.
+                  </p>
+                </div>
+              )}
+
+              {step === "optional" && (
+                <div className="space-y-4">
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <FormField
+                      control={form.control}
+                      name="bedrooms"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Chambres</FormLabel>
+                          <FormControl>
+                            <Input type="number" min={0} step={1} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="bathrooms"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Salles de bain</FormLabel>
+                          <FormControl>
+                            <Input type="number" min={0} step={1} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="area"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Surface (m²)</FormLabel>
+                          <FormControl>
+                            <Input type="number" min={0} step={1} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <FormField
                     control={form.control}
                     name="agent_id"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Agent</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={(value) => field.onChange(value === "__none__" ? "" : value)}
+                          value={field.value || "__none__"}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="__none__">Aucun agent</SelectItem>
                             {agentList.map((a) => (
                               <SelectItem key={a.id} value={a.id}>
                                 {a.name}
@@ -247,16 +358,20 @@ const PropertyFormDialog = ({
                       </FormItem>
                     )}
                   />
-                </div>
-                <div className="grid grid-cols-3 gap-3">
+                  {agentList.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      No agents yet. Créez un agent depuis la section « Agents ».
+                    </p>
+                  ) : null}
+
                   <FormField
                     control={form.control}
-                    name="bedrooms"
+                    name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Ch.</FormLabel>
+                        <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Input type="number" min={0} step={1} {...field} />
+                          <Textarea className="min-h-[120px]" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -264,150 +379,97 @@ const PropertyFormDialog = ({
                   />
                   <FormField
                     control={form.control}
-                    name="bathrooms"
+                    name="amenitiesText"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>SdB</FormLabel>
+                        <FormLabel>Équipements (séparés par des virgules)</FormLabel>
                         <FormControl>
-                          <Input type="number" min={0} step={1} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="area"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Surface (m²)</FormLabel>
-                        <FormControl>
-                          <Input type="number" min={1} step={1} {...field} />
+                          <Input {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="images"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Photos du bien</FormLabel>
-                      <PropertyPhotosField
-                        value={field.value}
-                        onChange={field.onChange}
+              )}
+
+              {step === "preview" && (
+                <div className="space-y-4">
+                  <div className="rounded-xl border bg-muted/20 p-4">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Aperçu rapide</p>
+                    <h3 className="mt-1 text-lg font-semibold">{titlePreview}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {values.type === "sale" ? "Vente" : "Location"} · {cityLabels[values.city]} ·{" "}
+                      {new Intl.NumberFormat("fr-DZ", { maximumFractionDigits: 0 }).format(values.price)} DZD
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {values.images.length} photo(s) · {values.agent_id ? "Agent assigné" : "Aucun agent"}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
+                    Champs obligatoires : Titre, Transaction, Prix, Ville et Photo.
+                  </div>
+                  {submitMode === "draft" ? (
+                    <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs text-amber-700">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Enregistrement en brouillon
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+
+            <DialogFooter className="shrink-0 border-t px-6 py-4">
+              <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between sm:space-x-0">
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                    Annuler
+                  </Button>
+                  {canGoBack ? (
+                    <Button type="button" variant="outline" onClick={goBack}>
+                      <ChevronLeft className="mr-1 h-4 w-4" />
+                      Retour
+                    </Button>
+                  ) : null}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {canGoForward ? (
+                    <Button type="button" onClick={() => void goForward()}>
+                      Suivant
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
                         disabled={isSubmitting}
-                      />
-                      <FormMessage />
-                    </FormItem>
+                        onClick={async () => {
+                          const ok = await form.trigger(essentialFieldNames);
+                          if (!ok) return;
+                          submitModeRef.current = "draft";
+                          setSubmitMode("draft");
+                          void form.handleSubmit(onSubmit)();
+                        }}
+                      >
+                        Enregistrer brouillon
+                      </Button>
+                      <Button
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={() => {
+                          submitModeRef.current = "publish";
+                          setSubmitMode("publish");
+                          void form.handleSubmit(onSubmit)();
+                        }}
+                      >
+                        Publier maintenant
+                      </Button>
+                    </>
                   )}
-                />
-                <FormField
-                  control={form.control}
-                  name="amenitiesText"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Équipements (séparés par des virgules)</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {form.watch("type") === "rent" && (
-                  <FormField
-                    control={form.control}
-                    name="bookedDatesJson"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Périodes réservées (JSON optionnel)</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            className="min-h-[80px] font-mono text-xs"
-                            placeholder='[{"from":"2026-04-01","to":"2026-04-15"}]'
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>Tableau d’objets from/to (YYYY-MM-DD).</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-                <div className="flex flex-wrap gap-4 rounded-lg border p-3">
-                  <FormField
-                    control={form.control}
-                    name="featured"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={(v) => field.onChange(v === true)}
-                          />
-                        </FormControl>
-                        <FormLabel className="font-normal">Mis en avant (featured)</FormLabel>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="tag_exclusive"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={(v) => field.onChange(v === true)}
-                          />
-                        </FormControl>
-                        <FormLabel className="font-normal">Tag exclusif</FormLabel>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="tag_new"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={(v) => field.onChange(v === true)}
-                          />
-                        </FormControl>
-                        <FormLabel className="font-normal">Tag nouveau</FormLabel>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="tag_featured"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={(v) => field.onChange(v === true)}
-                          />
-                        </FormControl>
-                        <FormLabel className="font-normal">Tag featured</FormLabel>
-                      </FormItem>
-                    )}
-                  />
                 </div>
               </div>
-            </div>
-            <DialogFooter className="shrink-0 border-t bg-background px-6 py-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Annuler
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {mode === "create" ? "Créer" : "Enregistrer"}
-              </Button>
             </DialogFooter>
           </form>
         </Form>

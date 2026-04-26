@@ -24,6 +24,7 @@ interface PropertyPhotosFieldProps {
 const PropertyPhotosField = ({ value, onChange, disabled, id }: PropertyPhotosFieldProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const [urlDraft, setUrlDraft] = useState("");
   const { toast } = useToast();
 
@@ -161,6 +162,28 @@ const PropertyPhotosField = ({ value, onChange, disabled, id }: PropertyPhotosFi
         </span>
       </div>
 
+      <div
+        className={cn(
+          "rounded-lg border border-dashed p-4 text-center text-sm transition-colors",
+          dragOver ? "border-primary bg-primary/5" : "border-border bg-muted/20",
+          blocked && "opacity-60",
+        )}
+        onDragOver={(e) => {
+          if (blocked) return;
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          if (blocked) return;
+          e.preventDefault();
+          setDragOver(false);
+          void addFiles(e.dataTransfer.files);
+        }}
+      >
+        Glissez-déposez vos images ici (4:5 recommandé) ou utilisez le bouton ci-dessus.
+      </div>
+
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Input
           type="url"
@@ -195,7 +218,12 @@ const PropertyPhotosField = ({ value, onChange, disabled, id }: PropertyPhotosFi
               key={`${i}-${src.length}-${src.slice(0, 24)}`}
               className="group relative overflow-hidden rounded-lg border bg-muted shadow-sm"
             >
-              <img src={src} alt="" className="aspect-[4/3] w-full object-cover" loading="lazy" />
+              <img
+                src={src}
+                alt=""
+                className="aspect-[4/5] w-full object-cover object-center"
+                loading="lazy"
+              />
               <div
                 className={cn(
                   "absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-gradient-to-t from-black/70 to-transparent p-1.5",
