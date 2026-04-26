@@ -8,7 +8,7 @@ export async function presignPropertyImage(req: Request, res: Response): Promise
   if (!isUploadStorageAvailable()) {
     throw new HttpError(
       503,
-      "Stockage non configuré. En local : définissez STORAGE_LOCAL_ROOT (dossier sur disque), ou configurez S3/R2 (STORAGE_BUCKET, clés API, STORAGE_PUBLIC_URL).",
+      "Stockage non configuré. En local : définissez STORAGE_LOCAL_ROOT (dossier sur disque), ou S3 compatible : STORAGE_BUCKET, STORAGE_ENDPOINT, STORAGE_ACCESS_KEY_ID, STORAGE_SECRET_ACCESS_KEY, STORAGE_PUBLIC_URL (optionnel : STORAGE_REGION).",
       { code: "STORAGE_NOT_CONFIGURED" },
     );
   }

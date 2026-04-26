@@ -34,6 +34,31 @@ async function main() {
   });
 
   console.log(`Server running on port ${PORT}`);
+  // eslint-disable-next-line no-console -- diagnostic stockage (valeurs jamais affichées)
+  console.log(
+    "STORAGE_BUCKET loaded:",
+    process.env.STORAGE_BUCKET?.trim() ? "yes" : "no",
+  );
+  // eslint-disable-next-line no-console
+  console.log(
+    "STORAGE_ENDPOINT loaded:",
+    process.env.STORAGE_ENDPOINT?.trim() ? "yes" : "no",
+  );
+  // eslint-disable-next-line no-console
+  console.log(
+    "STORAGE_PUBLIC_URL loaded:",
+    process.env.STORAGE_PUBLIC_URL?.trim() ? "yes" : "no",
+  );
+  // eslint-disable-next-line no-console
+  console.log(
+    "STORAGE_ACCESS_KEY_ID loaded:",
+    process.env.STORAGE_ACCESS_KEY_ID?.trim() ? "yes" : "no",
+  );
+  // eslint-disable-next-line no-console
+  console.log(
+    "STORAGE_SECRET_ACCESS_KEY loaded:",
+    process.env.STORAGE_SECRET_ACCESS_KEY?.trim() ? "yes" : "no",
+  );
   // eslint-disable-next-line no-console -- diagnostic démarrage (jamais secrets)
   console.log("[APP_START]", {
     nodeEnv: process.env.NODE_ENV,

@@ -108,20 +108,20 @@ export const config = {
       : Boolean(process.env.TURNSTILE_SECRET_KEY?.trim()),
 
   /**
-   * Stockage objet S3-compatible (AWS S3 ou Cloudflare R2).
-   * `STORAGE_PUBLIC_URL` = URL publique de base des fichiers (sans slash final), ex. https://cdn.example.com ou bucket R2 public.
+   * Stockage objet S3-compatible (Supabase Storage, R2, MinIO, S3, etc.).
+   * `STORAGE_PUBLIC_URL` = URL publique de base des fichiers (sans slash final), ex. `https://xxx.supabase.co/storage/v1/object/public/mon-bucket`
+   * ou domaine public du bucket. Ne pas s’appuyer sur `AWS_*` (non utilisé).
    */
   storage: {
     bucket: process.env.STORAGE_BUCKET?.trim() ?? "",
-    region:
-      process.env.STORAGE_REGION?.trim() ||
-      (process.env.STORAGE_ENDPOINT?.trim() ? "auto" : "us-east-1"),
+    /** Supabase / endpoint custom : utiliser `STORAGE_REGION` (ex. région du projet) ; repli sûr pour le SDK. */
+    region: process.env.STORAGE_REGION?.trim() || "us-east-1",
     endpoint: process.env.STORAGE_ENDPOINT?.trim() ?? "",
     accessKeyId: process.env.STORAGE_ACCESS_KEY_ID?.trim() ?? "",
     secretAccessKey: process.env.STORAGE_SECRET_ACCESS_KEY?.trim() ?? "",
     publicUrl: process.env.STORAGE_PUBLIC_URL?.trim().replace(/\/$/, "") ?? "",
-    /** R2 / MinIO : souvent true ; AWS hébergé sans endpoint custom : false */
-    forcePathStyle: process.env.STORAGE_FORCE_PATH_STYLE === "true" || Boolean(process.env.STORAGE_ENDPOINT?.trim()),
+    /** S3 compatible (Supabase, MinIO) : requis en path-style pour les hôtes d’API non virtuels. */
+    forcePathStyle: true,
   },
   /**
    * Stockage fichiers sur disque (développement / petit serveur) — sans S3.

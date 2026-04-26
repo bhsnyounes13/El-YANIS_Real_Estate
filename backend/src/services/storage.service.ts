@@ -12,7 +12,11 @@ let s3Client: S3Client | null = null;
 export function isObjectStorageConfigured(): boolean {
   const s = config.storage;
   return Boolean(
-    s.bucket && s.accessKeyId && s.secretAccessKey && s.publicUrl,
+    s.bucket &&
+      s.endpoint &&
+      s.accessKeyId &&
+      s.secretAccessKey &&
+      s.publicUrl,
   );
 }
 
@@ -23,12 +27,12 @@ export function isUploadStorageAvailable(): boolean {
 
 function getS3Client(): S3Client | null {
   const s = config.storage;
-  if (!s.bucket || !s.accessKeyId || !s.secretAccessKey) return null;
+  if (!s.bucket || !s.endpoint || !s.accessKeyId || !s.secretAccessKey) return null;
 
   if (!s3Client) {
     s3Client = new S3Client({
       region: s.region,
-      endpoint: s.endpoint || undefined,
+      endpoint: s.endpoint,
       credentials: {
         accessKeyId: s.accessKeyId,
         secretAccessKey: s.secretAccessKey,
