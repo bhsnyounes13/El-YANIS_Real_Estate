@@ -1,8 +1,13 @@
+# EL-YANIS (Vite + React Router) — obligatoire sur Hostinger/Apache : sans ce fichier, /admin, /properties, etc. = 404.
+# Dépôt : copier TOUT le contenu de dist/ ici, y compris ce fichier caché « .htaccess ».
+Options -MultiViews
+DirectoryIndex index.html
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
   RewriteRule ^index\.html$ - [L]
-  # Ne pas renvoyer l’SPA pour /api ni /uploads : sinon le front reçoit du HTML (200) au lieu du JSON.
+  # Ne pas renvoyer l’SPA pour /api ni /uploads : le JSON doit venir d’un vrai reverse proxy, pas d’index.html.
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{REQUEST_URI} !^/api/

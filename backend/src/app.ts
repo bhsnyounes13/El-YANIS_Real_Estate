@@ -20,10 +20,23 @@ import { adminRoutes } from "./routes/admin.routes.js";
 import { userRoutes } from "./routes/user.routes.js";
 import * as uploadController from "./controllers/upload.controller.js";
 import { asyncHandler } from "./middleware/async-handler.js";
+import { prisma } from "./prisma.js";
+import { getRequiredTableStatus } from "./db/required-tables.js";
+import { z } from "zod";
+import { requireDebugEmailAccess } from "./middleware/debug-email-access.js";
+import {
+  isSmtpAuthConfigured,
+  logSmtpErrorSafe,
+  runSmtpVerify,
+  sendMail,
+} from "./services/mailer.js";
 
 /** Carte d’exposition (diagnostic / déploiement) — hors secrets. */
 const PUBLIC_API_ROUTES: string[] = [
   "GET /api/health",
+  "GET /api/debug/db",
+  "GET /api/debug/smtp",
+  "POST /api/debug/send-test-email",
   "GET /api",
   "GET /health",
   "PUT /api/upload-local/:uploadId",
@@ -85,7 +98,7 @@ export function createApp() {
       },
       credentials: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"],
+      allowedHeaders: ["Content-Type", "Authorization", "x-debug-token"],
     }),
   );
   app.use(express.json({ limit: "2mb" }));
@@ -101,15 +114,145 @@ export function createApp() {
     asyncHandler(uploadController.receiveLocalPropertyImage),
   );
 
-  // Avant le rate limiter global sur `/api` — le healthcheck Railway / proxy doit toujours répondre 200.
-  app.get("/api/health", (_req, res) => {
-    res.status(200).json({
-      ok: true,
-      service: "elyanis-backend",
-      env: process.env.NODE_ENV || "development",
-      time: new Date().toISOString(),
-    });
-  });
+  // Avant le rate limiter global sur `/api` — health : vérifie connexion + tables Prisma requises.
+  app.get(
+    "/api/health",
+    asyncHandler(async (_req, res) => {
+      try {
+        await prisma.$connect();
+        const { ok, missing } = await getRequiredTableStatus(prisma);
+        if (!ok) {
+          res.status(500).json({
+            ok: false,
+            error: "DATABASE_SCHEMA_NOT_READY",
+            missingTables: missing,
+          });
+          return;
+        }
+        res.status(200).json({
+          ok: true,
+          database: "connected",
+          tables: {
+            User: true,
+            Property: true,
+            Agent: true,
+          },
+        });
+        return;
+      } catch (e) {
+        const err = e instanceof Error ? e.message : String(e);
+        res.status(500).json({
+          ok: false,
+          error: "DATABASE_UNAVAILABLE",
+          message: err,
+        });
+        return;
+      }
+    }),
+  );
+
+  app.get(
+    "/api/debug/db",
+    asyncHandler(async (_req, res) => {
+      const hasDatabaseUrl = Boolean(process.env.DATABASE_URL?.trim());
+      if (!hasDatabaseUrl) {
+        res.json({
+          ok: true,
+          hasDatabaseUrl: false,
+          provider: "postgresql",
+          schemaReady: false,
+          missingTables: ["User", "Property", "Agent"],
+        });
+        return;
+      }
+      try {
+        await prisma.$connect();
+        const { ok, missing } = await getRequiredTableStatus(prisma);
+        res.json({
+          ok: true,
+          hasDatabaseUrl: true,
+          provider: "postgresql",
+          schemaReady: ok,
+          missingTables: ok ? [] : missing,
+        });
+        return;
+      } catch {
+        res.json({
+          ok: true,
+          hasDatabaseUrl: true,
+          provider: "postgresql",
+          schemaReady: false,
+          missingTables: ["User", "Property", "Agent"],
+        });
+        return;
+      }
+    }),
+  );
+
+  app.get(
+    "/api/debug/smtp",
+    requireDebugEmailAccess,
+    asyncHandler(async (_req, res) => {
+      const v = await runSmtpVerify();
+      if (v.ok) {
+        res.status(200).json({
+          ok: true,
+          smtp: "connected",
+          host: process.env.SMTP_HOST || "missing",
+          port: Number(process.env.SMTP_PORT || 0),
+          secure: Number(process.env.SMTP_PORT) === 465,
+          userExists: Boolean(process.env.SMTP_USER),
+          passExists: Boolean(process.env.SMTP_PASS),
+          fromExists: Boolean(process.env.SMTP_FROM),
+        });
+        return;
+      }
+      res.status(500).json({
+        ok: false,
+        error: "SMTP_FAILED",
+        code: v.code,
+        command: v.command,
+        message: v.message,
+      });
+    }),
+  );
+
+  const testEmailBody = z.object({ to: z.string().email() });
+
+  app.post(
+    "/api/debug/send-test-email",
+    requireDebugEmailAccess,
+    asyncHandler(async (req, res) => {
+      const parsed = testEmailBody.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ ok: false, error: "VALIDATION_ERROR" });
+        return;
+      }
+      if (!isSmtpAuthConfigured()) {
+        res.status(503).json({
+          ok: false,
+          error: "EMAIL_SEND_FAILED",
+          message: "Email could not be sent",
+        });
+        return;
+      }
+      try {
+        await sendMail({
+          to: parsed.data.to,
+          subject: "EL-YANIS SMTP Test",
+          text: "SMTP test from Railway backend succeeded.",
+        });
+        res.json({ ok: true, message: "Test email sent" });
+      } catch (e) {
+        logSmtpErrorSafe(e, "debug_send_test");
+        res.status(503).json({
+          ok: false,
+          error: "EMAIL_SEND_FAILED",
+          message: "Email could not be sent",
+        });
+      }
+    }),
+  );
 
   app.get("/api", (_req, res) => {
     res.status(200).json({
@@ -168,6 +311,7 @@ export function createApp() {
 
   app.use((req, res) => {
     res.status(404).json({
+      ok: false,
       error: "Not found",
       method: req.method,
       path: req.originalUrl,

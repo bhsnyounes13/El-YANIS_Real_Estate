@@ -9,6 +9,7 @@ import { prisma } from "./prisma.js";
 import { hashPassword } from "./auth/password.js";
 import * as userService from "./services/user.service.js";
 import { createApp } from "./app.js";
+import { getSmtpConfigSnapshot } from "./services/mailer.js";
 
 async function bootstrapEnvAdmin(): Promise<void> {
   const email = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase();
@@ -33,6 +34,26 @@ async function main() {
   });
 
   console.log(`Server running on port ${PORT}`);
+  // eslint-disable-next-line no-console -- diagnostic démarrage (jamais secrets)
+  console.log("[APP_START]", {
+    nodeEnv: process.env.NODE_ENV,
+    port: process.env.PORT ?? String(PORT),
+    frontendOrigin: process.env.FRONTEND_ORIGIN ?? "missing",
+    smtpHost: process.env.SMTP_HOST || "missing",
+    smtpPort: process.env.SMTP_PORT || "missing",
+    smtpUserExists: Boolean(process.env.SMTP_USER),
+    smtpPassExists: Boolean(process.env.SMTP_PASS),
+    smtpFromExists: Boolean(process.env.SMTP_FROM),
+  });
+  const smtpSnap = getSmtpConfigSnapshot();
+  // eslint-disable-next-line no-console -- diagnostic prod (jamais SMTP_PASS)
+  console.log("[SMTP_CONFIG]", {
+    host: smtpSnap.host,
+    port: smtpSnap.port,
+    userExists: smtpSnap.userExists,
+    passExists: smtpSnap.passExists,
+    from: smtpSnap.from,
+  });
   console.log("NODE_ENV:", process.env.NODE_ENV);
   console.log("FRONTEND_ORIGIN:", process.env.FRONTEND_ORIGIN ?? "(défaut config)");
   console.log("API health route: /api/health");

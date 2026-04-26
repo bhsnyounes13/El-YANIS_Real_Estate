@@ -75,7 +75,11 @@ const AdminLogin = () => {
           </div>
           <CardTitle className="text-2xl">Administration EL-YANIS</CardTitle>
           <CardDescription>
-            Connexion sécurisée via le serveur (JWT + cookie refresh httpOnly).
+            Identifiants = ceux du déploiement :{" "}
+            <code className="rounded bg-muted px-1 text-xs">npm run seed:admin</code> (défaut{" "}
+            <code className="rounded bg-muted px-1 text-xs">admin@gmail.com</code>) ou{" "}
+            <code className="rounded bg-muted px-1 text-xs">BOOTSTRAP_*</code> sur Railway. JWT +
+            cookie refresh httpOnly.
           </CardDescription>
         </CardHeader>
         <form onSubmit={(e) => void onSubmit(e)}>
@@ -87,6 +91,7 @@ const AdminLogin = () => {
                 name="email"
                 type="email"
                 autoComplete="username"
+                placeholder="admin@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={pending}

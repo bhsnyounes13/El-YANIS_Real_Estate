@@ -15,7 +15,9 @@
 |--------|-----------|
 | Install | `npm ci` (phase Railpack ; voir `.npmrc` pour garder les devDependencies) |
 | Build | `npm run build:production` (ne pas relancer `npm ci` ici : évite `EBUSY` sur `node_modules/.vite`) |
-| Start | `npm start` → `node backend/dist/index.js` |
+| Start | `npm start` (recommandé) → `prisma migrate deploy` puis `node backend/dist/index.js` |
+
+**Important — URL `{"error":"Not found"}` sur `/api/...` :** le code API compilé se trouve dans **`backend/dist/`**, pas à la racine. Le build (`npm run build:production` ou Railpack) doit exécuter **`build:api`** (TypeScript) et **`build:railway-root-entry`**, ce qui génère aussi un **`dist/index.js` à la racine** si vous avez paramétré le service sur `node dist/index.js`. Mieux : **déploiement → Start = `npm start`** (défaut de `railway.json`) afin d’inclure les migrations et le bon binaire. Ne pas utiliser un vieux `dist/` jamais reconstruit.
 
 Railway injecte **`PORT`** automatiquement. L’API écoute par défaut sur **`0.0.0.0`** (variable optionnelle **`HOST`** pour surcharger).
 
@@ -37,10 +39,12 @@ Railway injecte **`PORT`** automatiquement. L’API écoute par défaut sur **`0
 
 **Turnstile côté navigateur** : `VITE_TURNSTILE_SITE_KEY` au build si vous utilisez le widget.
 
+**Variables via CLI** : pour configurer l’e-mail (SMTP) avec la CLI Railway (`railway login`, `railway link`, `railway variable set …`), voir la section **Configuration avec la CLI Railway** dans [SMTP.md](SMTP.md).
+
 ### Schéma Prisma
 
-- Sans migrations versionnées : `npx prisma db push` depuis votre machine (avec la `DATABASE_URL` de prod), ou une commande one-shot.
-- Avec migrations : `deploy.preDeployCommand` ou équivalent, ex. `npx prisma migrate deploy` (adapter au projet).
+- Le dépôt contient des **migrations** (`backend/prisma/migrations/`) : au démarrage, `npm start` exécute **`prisma migrate deploy`**. Voir [RAILWAY_DATABASE_FIX.md](RAILWAY_DATABASE_FIX.md) en cas d’erreur « table n’existe pas ».
+- Urgence seulement : `EMERGENCY_DB_PUSH=true` (équivalent `db push` au boot) — à éviter en prod. Référence : [RAILWAY_DATABASE_FIX.md](RAILWAY_DATABASE_FIX.md).
 
 ### Healthcheck
 
@@ -58,7 +62,7 @@ Si le déploiement affiche **« service unavailable »** pendant plusieurs minut
 Si le **front** est déployé sur un **autre domaine** que l’API, le build Vite **doit** connaître l’URL de l’API, sinon le navigateur appelle `/api/…` sur l’hébergeur du site → **404** (« API introuvable »).
 
 1. **URL publique de l’API** : dans Railway, service de l’API → **Settings → Networking** (ou l’URL `*.up.railway.app` affichée). Aucun slash final.
-2. **Vérification** : `GET https://<cette-url>/api/health` doit répondre `200` avec un JSON (ex. `{"ok":true}`). Si ce n’est pas le cas, l’URL est incorrecte ou l’API n’écoute pas.
+2. **Vérification** : `GET https://<cette-url>/api/health` doit répondre `200` avec `ok: true` et des tables prêtes. Si `ok: false` / `DATABASE_SCHEMA_NOT_READY`, exécutez les migrations (voir [RAILWAY_DATABASE_FIX.md](RAILWAY_DATABASE_FIX.md)).
 3. **Build du front** : à la racine du dépôt, définir `VITE_API_URL=https://<cette-même-url>` (fichier **`.env.production`** en local, ou variable de **build** sur la CI / l’hébergeur du site), puis `npm run build` et uploader le dossier `dist/`.
 4. **Variables côté API** (service Railway de l’API) :
    - `FRONTEND_ORIGIN=https://votre-site.com` (ex. `https://elyanis.com`, **sans** `/` final) — obligatoire pour CORS / cookies.

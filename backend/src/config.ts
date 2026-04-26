@@ -130,4 +130,22 @@ export const config = {
   localUploadRoot: process.env.STORAGE_LOCAL_ROOT?.trim() ?? "",
   /** URL de base pour les liens publics (défaut : http://127.0.0.1:PORT). */
   localUploadPublicBase: process.env.STORAGE_LOCAL_PUBLIC_BASE?.trim() ?? "",
+
+  /**
+   * SMTP (optionnel) — métadonnées pour l’UI / logs ; transport réel dans `services/mailer.ts`.
+   * Défaut port 465 (TLS). Voir docs/SMTP_SETUP.md.
+   */
+  smtp: (() => {
+    const host = process.env.SMTP_HOST?.trim() ?? "";
+    const user = process.env.SMTP_USER?.trim() ?? "";
+    const pass = process.env.SMTP_PASS?.trim() ?? "";
+    const from = process.env.SMTP_FROM?.trim() ?? "";
+    const port = process.env.SMTP_PORT?.trim()
+      ? Number(process.env.SMTP_PORT)
+      : 465;
+    const secure = port === 465;
+    const notifyTo = process.env.SMTP_NOTIFY_TO?.trim() ?? "";
+    const configured = Boolean(host && user && from && pass);
+    return { host, user, pass, from, port, secure, notifyTo, configured };
+  })(),
 };

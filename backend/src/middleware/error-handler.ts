@@ -31,6 +31,27 @@ export function errorHandler(
       res.status(404).json({ error: "Record not found", code: "NOT_FOUND" });
       return;
     }
+    if (err.code === "P2021") {
+      res.status(503).json({
+        ok: false,
+        error: "DATABASE_SCHEMA_NOT_READY",
+        message: "Database tables are missing. Run Prisma migrations.",
+      });
+      return;
+    }
+  }
+
+  const asText = err instanceof Error ? err.message : String(err);
+  if (
+    /does not exist in the current database/i.test(asText) &&
+    (/table|relation/i.test(asText) || /P2021|public\./i.test(asText))
+  ) {
+    res.status(503).json({
+      ok: false,
+      error: "DATABASE_SCHEMA_NOT_READY",
+      message: "Database tables are missing. Run Prisma migrations.",
+    });
+    return;
   }
 
   logger.error({ err }, "internal_server_error");
