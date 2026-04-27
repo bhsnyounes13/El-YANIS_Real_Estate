@@ -1,4 +1,4 @@
-import { fetchWithDiagnostics, getApiBase, resolveApiUrl } from "@/lib/api/client";
+import { ApiError, fetchWithDiagnostics, getApiBase, resolveApiUrl } from "@/lib/api/client";
 import { getAccessToken, setAccessToken } from "./accessToken";
 
 export type UserRole = "admin" | "user";
@@ -23,6 +23,9 @@ function resolveAuthPath(path: string): string {
 
 function formatAuthFailure(kind: "login" | "register", status: number, bodyError?: string): string {
   if (bodyError) return bodyError;
+  if (status === 0) {
+    return "Impossible de joindre l'API : vérifiez votre connexion Internet et que le serveur est accessible. Si le problème persiste, l'API peut être indisponible.";
+  }
   if (status === 404) {
     return "API introuvable (404) : l’URL d’API est probablement mal configurée. Définissez VITE_API_URL (sans slash final) au build (voir .env.production.example), recompilez (npm run build) et redéployez le front. Vous pouvez aussi proxyfier /api/ vers l’API (docs/HOSTINGER.md). Test : ouvrez /api/health sur l’hôte cible (ex. l’URL Railway) dans le navigateur.";
   }
@@ -47,16 +50,24 @@ export async function loginRequest(
   accessToken: string;
   user: AuthUser;
 }> {
-  const res = await fetchWithDiagnostics(resolveAuthPath("/api/auth/login"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    credentials: "include",
-    body: JSON.stringify({
-      email,
-      password,
-      ...(turnstileToken ? { turnstileToken } : {}),
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetchWithDiagnostics(resolveAuthPath("/api/auth/login"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        email,
+        password,
+        ...(turnstileToken ? { turnstileToken } : {}),
+      }),
+    });
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 0) {
+      throw new Error(formatAuthFailure("login", 0));
+    }
+    throw err;
+  }
   const body = await parseJson<{ accessToken?: string; user?: AuthUser; error?: string }>(res);
   if (!res.ok) {
     throw new Error(formatAuthFailure("login", res.status, body.error));
@@ -74,16 +85,24 @@ export async function registerRequest(
   accessToken: string;
   user: AuthUser;
 }> {
-  const res = await fetchWithDiagnostics(resolveAuthPath("/api/auth/register"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    credentials: "include",
-    body: JSON.stringify({
-      email,
-      password,
-      ...(turnstileToken ? { turnstileToken } : {}),
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetchWithDiagnostics(resolveAuthPath("/api/auth/register"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        email,
+        password,
+        ...(turnstileToken ? { turnstileToken } : {}),
+      }),
+    });
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 0) {
+      throw new Error(formatAuthFailure("register", 0));
+    }
+    throw err;
+  }
   const body = await parseJson<{ accessToken?: string; user?: AuthUser; error?: string }>(res);
   if (!res.ok) {
     throw new Error(formatAuthFailure("register", res.status, body.error));
