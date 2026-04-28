@@ -96,7 +96,7 @@ Fallback mock : `src/lib/api/fallback.ts` (utilisé par les hooks si pas d’API
 ## 7. Hooks React Query
 
 | Hook                    | Fichier                                      |
-| ----------------------- |-------------------------------------------- |
+| ----------------------- | -------------------------------------------- |
 | `useProperties`         | `src/hooks/queries/useProperties.ts`         |
 | `useFeaturedProperties` | `src/hooks/queries/useFeaturedProperties.ts` |
 | `useProperty`           | `src/hooks/queries/useProperty.ts`           |

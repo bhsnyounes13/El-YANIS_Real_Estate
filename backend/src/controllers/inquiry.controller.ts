@@ -1,14 +1,8 @@
 import type { Request, Response } from "express";
 import * as inquiryService from "../services/inquiry.service.js";
-import {
-  contactPublicSchema,
-  propertyInquiryPublicSchema,
-} from "../validators/schemas.js";
+import { contactPublicSchema, propertyInquiryPublicSchema } from "../validators/schemas.js";
 import { HttpError } from "../errors/http-error.js";
-import {
-  contactSubmissionToJson,
-  propertyInquiryToJson,
-} from "../utils/serialization.js";
+import { contactSubmissionToJson, propertyInquiryToJson } from "../utils/serialization.js";
 import { assertTurnstileIfRequired } from "../utils/form-security.js";
 import * as emailService from "../services/email.service.js";
 import { isFormNotificationEnabled, logSmtpErrorSafe } from "../services/mailer.js";

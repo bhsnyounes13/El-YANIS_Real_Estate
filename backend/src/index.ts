@@ -35,20 +35,11 @@ async function main() {
 
   console.log(`Server running on port ${PORT}`);
   // eslint-disable-next-line no-console -- diagnostic stockage (valeurs jamais affichées)
-  console.log(
-    "STORAGE_BUCKET loaded:",
-    process.env.STORAGE_BUCKET?.trim() ? "yes" : "no",
-  );
+  console.log("STORAGE_BUCKET loaded:", process.env.STORAGE_BUCKET?.trim() ? "yes" : "no");
   // eslint-disable-next-line no-console
-  console.log(
-    "STORAGE_ENDPOINT loaded:",
-    process.env.STORAGE_ENDPOINT?.trim() ? "yes" : "no",
-  );
+  console.log("STORAGE_ENDPOINT loaded:", process.env.STORAGE_ENDPOINT?.trim() ? "yes" : "no");
   // eslint-disable-next-line no-console
-  console.log(
-    "STORAGE_PUBLIC_URL loaded:",
-    process.env.STORAGE_PUBLIC_URL?.trim() ? "yes" : "no",
-  );
+  console.log("STORAGE_PUBLIC_URL loaded:", process.env.STORAGE_PUBLIC_URL?.trim() ? "yes" : "no");
   // eslint-disable-next-line no-console
   console.log(
     "STORAGE_ACCESS_KEY_ID loaded:",
@@ -93,8 +84,12 @@ async function main() {
     "api_started",
   );
 
-  await verifyDatabase(prisma);
-  await bootstrapEnvAdmin();
+  if (process.env.NODE_ENV === "production") {
+    await verifyDatabase(prisma);
+    await bootstrapEnvAdmin();
+  } else {
+    console.log("[DEV MODE] Skipping database verification - API will run without DB for testing");
+  }
   logger.info("database_ready");
 }
 

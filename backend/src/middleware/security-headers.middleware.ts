@@ -21,10 +21,7 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
   );
 
   if (isHttpsRequest(req)) {
-    res.setHeader(
-      "Strict-Transport-Security",
-      "max-age=63072000; includeSubDomains; preload",
-    );
+    res.setHeader("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
   }
 
   next();

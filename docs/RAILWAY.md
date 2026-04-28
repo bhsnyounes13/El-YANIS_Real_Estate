@@ -11,11 +11,11 @@
 
 ### Commandes (déjà dans `railway.json`)
 
-| Étape | Commande |
-|--------|-----------|
-| Install | `npm ci` (phase Railpack ; voir `.npmrc` pour garder les devDependencies) |
-| Build | `npm run build:production` (ne pas relancer `npm ci` ici : évite `EBUSY` sur `node_modules/.vite`) |
-| Start | `npm start` (recommandé) → `prisma migrate deploy` puis `node backend/dist/index.js` |
+| Étape   | Commande                                                                                           |
+| ------- | -------------------------------------------------------------------------------------------------- |
+| Install | `npm ci` (phase Railpack ; voir `.npmrc` pour garder les devDependencies)                          |
+| Build   | `npm run build:production` (ne pas relancer `npm ci` ici : évite `EBUSY` sur `node_modules/.vite`) |
+| Start   | `npm start` (recommandé) → `prisma migrate deploy` puis `node backend/dist/index.js`               |
 
 **Important — URL `{"error":"Not found"}` sur `/api/...` :** le code API compilé se trouve dans **`backend/dist/`**, pas à la racine. Le build (`npm run build:production` ou Railpack) doit exécuter **`build:api`** (TypeScript) et **`build:railway-root-entry`**, ce qui génère aussi un **`dist/index.js` à la racine** si vous avez paramétré le service sur `node dist/index.js`. Mieux : **déploiement → Start = `npm start`** (défaut de `railway.json`) afin d’inclure les migrations et le bon binaire. Ne pas utiliser un vieux `dist/` jamais reconstruit.
 
@@ -25,17 +25,17 @@ Railway injecte **`PORT`** automatiquement. L’API écoute par défaut sur **`0
 
 ### Variables d’environnement (service web)
 
-| Variable | Obligatoire | Remarque |
-|----------|-------------|----------|
-| `NODE_ENV` | oui | `production` |
-| `DATABASE_URL` | oui | Fournie par le plugin Postgres si lié ; en cas d’échec de connexion, vérifier `?sslmode=require` (souvent requis vers Postgres hébergé). |
-| `DB_CONNECT_TIMEOUT_MS` | non | Défaut 30000 — après démarrage HTTP, la vérif Prisma échoue avec un message explicite au lieu de bloquer indéfiniment. |
-| `JWT_ACCESS_SECRET` | oui | ≥ 32 caractères |
-| `FRONTEND_ORIGIN` | recommandé | URL **publique** exacte (sans `/` final). **Si absent** : l’API utilise `https://${RAILWAY_PUBLIC_DOMAIN}` (domaine public généré dans *Networking*). Définissez `FRONTEND_ORIGIN` si vous utilisez un **domaine personnalisé** ou si `RAILWAY_PUBLIC_DOMAIN` est vide au premier déploiement. |
-| `TURNSTILE_SECRET_KEY` | oui en prod | Requis par la validation au démarrage de l’API |
-| `SERVE_SPA` | recommandé | `true` pour servir le build Vite (`dist/`) depuis Express (monolithe) |
+| Variable                | Obligatoire | Remarque                                                                                                                                                                                                                                                                                       |
+| ----------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`              | oui         | `production`                                                                                                                                                                                                                                                                                   |
+| `DATABASE_URL`          | oui         | Fournie par le plugin Postgres si lié ; en cas d’échec de connexion, vérifier `?sslmode=require` (souvent requis vers Postgres hébergé).                                                                                                                                                       |
+| `DB_CONNECT_TIMEOUT_MS` | non         | Défaut 30000 — après démarrage HTTP, la vérif Prisma échoue avec un message explicite au lieu de bloquer indéfiniment.                                                                                                                                                                         |
+| `JWT_ACCESS_SECRET`     | oui         | ≥ 32 caractères                                                                                                                                                                                                                                                                                |
+| `FRONTEND_ORIGIN`       | recommandé  | URL **publique** exacte (sans `/` final). **Si absent** : l’API utilise `https://${RAILWAY_PUBLIC_DOMAIN}` (domaine public généré dans _Networking_). Définissez `FRONTEND_ORIGIN` si vous utilisez un **domaine personnalisé** ou si `RAILWAY_PUBLIC_DOMAIN` est vide au premier déploiement. |
+| `TURNSTILE_SECRET_KEY`  | oui en prod | Requis par la validation au démarrage de l’API                                                                                                                                                                                                                                                 |
+| `SERVE_SPA`             | recommandé  | `true` pour servir le build Vite (`dist/`) depuis Express (monolithe)                                                                                                                                                                                                                          |
 
-**Frontend / Vite** : si l’API et le site partagent **la même** URL Railway, laissez **`VITE_API_URL` vide** au build : les appels restent en `/api/...`. Sinon, définissez **`VITE_API_URL`** dans les variables **au moment du build** (section variables avec scope *Build* si disponible).
+**Frontend / Vite** : si l’API et le site partagent **la même** URL Railway, laissez **`VITE_API_URL` vide** au build : les appels restent en `/api/...`. Sinon, définissez **`VITE_API_URL`** dans les variables **au moment du build** (section variables avec scope _Build_ si disponible).
 
 **Turnstile côté navigateur** : `VITE_TURNSTILE_SITE_KEY` au build si vous utilisez le widget.
 

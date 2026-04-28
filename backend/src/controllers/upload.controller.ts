@@ -1,7 +1,10 @@
 import type { Request, Response } from "express";
 import { HttpError } from "../errors/http-error.js";
 import { saveLocalDiskUpload } from "../services/storage-local.service.js";
-import { createPresignedImageUpload, isUploadStorageAvailable } from "../services/storage.service.js";
+import {
+  createPresignedImageUpload,
+  isUploadStorageAvailable,
+} from "../services/storage.service.js";
 import { presignUploadBodySchema } from "../validators/schemas.js";
 
 export async function presignPropertyImage(req: Request, res: Response): Promise<void> {
@@ -36,7 +39,9 @@ export async function receiveLocalPropertyImage(req: Request, res: Response): Pr
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     if (msg === "MISSING_TOKEN" || msg === "INVALID_OR_EXPIRED_TICKET") {
-      throw new HttpError(403, "Jeton d’upload invalide ou expiré.", { code: "UPLOAD_TOKEN_INVALID" });
+      throw new HttpError(403, "Jeton d’upload invalide ou expiré.", {
+        code: "UPLOAD_TOKEN_INVALID",
+      });
     }
     if (msg === "CONTENT_TYPE_MISMATCH") {
       throw new HttpError(400, "Content-Type incompatible avec l’upload demandé.", {

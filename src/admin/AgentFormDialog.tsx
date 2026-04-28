@@ -125,7 +125,10 @@ const AgentFormDialog = ({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit((values) => onSubmit(formValuesToAgentWrite(values)))} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit((values) => onSubmit(formValuesToAgentWrite(values)))}
+            className="space-y-4"
+          >
             <div className="grid gap-3 sm:grid-cols-2">
               <FormField
                 control={form.control}
@@ -192,7 +195,11 @@ const AgentFormDialog = ({
                   <FormItem>
                     <FormLabel>Photo de profil</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://..." {...field} disabled={readOnly || uploadingPhoto} />
+                      <Input
+                        placeholder="https://..."
+                        {...field}
+                        disabled={readOnly || uploadingPhoto}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -223,13 +230,19 @@ const AgentFormDialog = ({
                       e.target.value = "";
                     }}
                   />
-                  <span className="text-xs text-muted-foreground">Format recommandé : portrait 4:5.</span>
+                  <span className="text-xs text-muted-foreground">
+                    Format recommandé : portrait 4:5.
+                  </span>
                 </div>
               ) : null}
 
               <div className="overflow-hidden rounded-xl border bg-muted">
                 {photoValue ? (
-                  <img src={photoValue} alt="" className="aspect-[4/5] w-full object-cover object-center" />
+                  <img
+                    src={photoValue}
+                    alt=""
+                    className="aspect-[4/5] w-full object-cover object-center"
+                  />
                 ) : (
                   <div className="flex aspect-[4/5] items-center justify-center text-sm text-muted-foreground">
                     <ImagePlus className="mr-2 h-4 w-4" />
@@ -298,7 +311,11 @@ const AgentFormDialog = ({
                   <FormItem>
                     <FormLabel>Facebook</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://facebook.com/..." {...field} disabled={readOnly} />
+                      <Input
+                        placeholder="https://facebook.com/..."
+                        {...field}
+                        disabled={readOnly}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -311,7 +328,11 @@ const AgentFormDialog = ({
                   <FormItem>
                     <FormLabel>Instagram</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://instagram.com/..." {...field} disabled={readOnly} />
+                      <Input
+                        placeholder="https://instagram.com/..."
+                        {...field}
+                        disabled={readOnly}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -324,7 +345,11 @@ const AgentFormDialog = ({
                   <FormItem>
                     <FormLabel>LinkedIn</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://linkedin.com/..." {...field} disabled={readOnly} />
+                      <Input
+                        placeholder="https://linkedin.com/..."
+                        {...field}
+                        disabled={readOnly}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

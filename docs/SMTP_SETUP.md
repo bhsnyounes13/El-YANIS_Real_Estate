@@ -4,15 +4,15 @@ Le transport est centralisé dans `backend/src/services/mailer.ts` (Nodemailer).
 
 ## Variables d’environnement (Railway / `.env` serveur)
 
-| Variable | Obligatoire pour l’envoi | Rôle |
-|----------|-------------------------|------|
-| `SMTP_HOST` | Oui | Hôte (ex. `smtp.hostinger.com`) |
-| `SMTP_PORT` | Non | défaut **465** ; mettre `587` si 465 est bloqué |
-| `SMTP_USER` | Oui | **Adresse e-mail complète** du compte |
-| `SMTP_PASS` | Oui | Mot de passe de la boîte ou **mot de passe d’application** (Gmail) |
-| `SMTP_FROM` | Oui | En-tête `From`, ex. `"EL-YANIS <contact@elyanis.com>"` |
-| `SMTP_NOTIFY_TO` | Recommandé | Destinataire des **notifications** formulaire contact + demande bien. Sans cela, l’e-mail d’alerte n’est pas envoyé (l’enregistrement en base a lieu quand même). |
-| `DEBUG_EMAIL_TOKEN` | Optionnel (prod) | Long jeton aléatoire. Requis en **production** pour `GET /api/debug/smtp` et `POST /api/debug/send-test-email` (sauf si `NODE_ENV` ≠ `production`) |
+| Variable            | Obligatoire pour l’envoi | Rôle                                                                                                                                                              |
+| ------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SMTP_HOST`         | Oui                      | Hôte (ex. `smtp.hostinger.com`)                                                                                                                                   |
+| `SMTP_PORT`         | Non                      | défaut **465** ; mettre `587` si 465 est bloqué                                                                                                                   |
+| `SMTP_USER`         | Oui                      | **Adresse e-mail complète** du compte                                                                                                                             |
+| `SMTP_PASS`         | Oui                      | Mot de passe de la boîte ou **mot de passe d’application** (Gmail)                                                                                                |
+| `SMTP_FROM`         | Oui                      | En-tête `From`, ex. `"EL-YANIS <contact@elyanis.com>"`                                                                                                            |
+| `SMTP_NOTIFY_TO`    | Recommandé               | Destinataire des **notifications** formulaire contact + demande bien. Sans cela, l’e-mail d’alerte n’est pas envoyé (l’enregistrement en base a lieu quand même). |
+| `DEBUG_EMAIL_TOKEN` | Optionnel (prod)         | Long jeton aléatoire. Requis en **production** pour `GET /api/debug/smtp` et `POST /api/debug/send-test-email` (sauf si `NODE_ENV` ≠ `production`)                |
 
 **Ne jamais** mettre `SMTP_PASS` ou `DEBUG_EMAIL_TOKEN` dans le frontend Vite (`.env` client).
 
@@ -48,7 +48,7 @@ Dans l’onglet **Logs** du service, recherchez `[SMTP_ERROR]`, `[SMTP_DEBUG_ERR
 
 ## Routes de test (développement et debug prod)
 
-- **`GET /api/debug/smtp`** : `transporter.verify()` + résumé non confidentiel.  
+- **`GET /api/debug/smtp`** : `transporter.verify()` + résumé non confidentiel.
 - **`POST /api/debug/send-test-email`** : body JSON `{ "to": "vous@exemple.com" }`.
 
 **Production** : ajouter l’en-tête  

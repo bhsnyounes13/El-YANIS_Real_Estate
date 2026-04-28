@@ -4,14 +4,14 @@ Si l’API renvoie des erreurs du type **« The table public.User does not exist
 
 ## Variables d’environnement (Railway)
 
-| Variable | Rôle |
-|----------|------|
-| `DATABASE_URL` | Fourni par le plugin PostgreSQL Railway (requis) |
-| `NODE_ENV` | `production` |
-| `FRONTEND_ORIGIN` | Ex. `https://elyanis.com` |
-| `JWT_ACCESS_SECRET` | Secret fort (≥ 32 caractères) |
-| `JWT_REFRESH_SECRET` | Secret fort pour les refresh tokens |
-| `ADMIN_PASSWORD` | Uniquement pour l’exécution manuelle de `npm run seed:admin` (ne pas commiter) |
+| Variable             | Rôle                                                                           |
+| -------------------- | ------------------------------------------------------------------------------ |
+| `DATABASE_URL`       | Fourni par le plugin PostgreSQL Railway (requis)                               |
+| `NODE_ENV`           | `production`                                                                   |
+| `FRONTEND_ORIGIN`    | Ex. `https://elyanis.com`                                                      |
+| `JWT_ACCESS_SECRET`  | Secret fort (≥ 32 caractères)                                                  |
+| `JWT_REFRESH_SECRET` | Secret fort pour les refresh tokens                                            |
+| `ADMIN_PASSWORD`     | Uniquement pour l’exécution manuelle de `npm run seed:admin` (ne pas commiter) |
 
 Démarrage : `prestart` exécute `prisma generate`, puis `node scripts/ensure-prisma-schema.mjs` lance **`prisma migrate deploy`** (pas `db push` par défaut).
 

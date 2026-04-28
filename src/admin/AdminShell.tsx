@@ -711,12 +711,16 @@ const AdminShell = () => {
         ) : adminAgents.query.isError ? (
           <p className="text-sm text-destructive">
             Erreur de chargement des agents :{" "}
-            {adminAgents.query.error instanceof Error ? adminAgents.query.error.message : "inconnue"}
+            {adminAgents.query.error instanceof Error
+              ? adminAgents.query.error.message
+              : "inconnue"}
           </p>
         ) : filteredAgents.length === 0 ? (
           <div className="rounded-xl border border-dashed p-8 text-center">
             <p className="font-medium">No agents yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">Commencez par créer le premier agent.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Commencez par créer le premier agent.
+            </p>
             <Button className="mt-4" onClick={openCreateAgent}>
               Créer un agent
             </Button>

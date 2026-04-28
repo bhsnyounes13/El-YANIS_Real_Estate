@@ -10,17 +10,17 @@ Stack de référence : site statique sur `https://elyanis.com`, API Node sur un 
 
 ## Variables (Railway — service API)
 
-| Variable | Exemple / remarque |
-|----------|---------------------|
-| `DATABASE_URL` | Fourni par l’add-on PostgreSQL Railway (`${{ Postgres.DATABASE_URL }}` ou variable équivalente). **Uniquement côté serveur.** |
-| `FRONTEND_ORIGIN` | `https://elyanis.com` ou liste : `https://elyanis.com,https://www.elyanis.com` (pas d’espace requis, sans `/` final). |
-| `NODE_ENV` | `production` |
-| `JWT_ACCESS_SECRET` | Secret aléatoire **≥ 32 caractères** (générer une valeur longue, ne pas commiter le vrai en clair). |
-| `FORMS_REQUIRE_TURNSTILE` | `false` si vous n’utilisez pas Cloudflare Turnstile sur les formulaires, sinon conserver la valeur adaptée. |
-| `TURNSTILE_SECRET_KEY` | (Optionnel) Si les formulaires publics exigent Turnstile en production. |
-| `COOKIE_SAMESITE` | Par défaut en prod le code utilise `none` pour le cookie refresh cross-site. Réglage explicite : `none` (front et API sur des sites différents, HTTPS). |
-| `COOKIE_SECURE` | En général `true` en production avec HTTPS. Avec `SameSite=none`, `Secure` doit rester `true` pour que le navigateur accepte le cookie. |
-| `COOKIE_DOMAIN` | (Optionnel) Ex. partager le cookie sur plusieurs sous-domaines **uniquement** si l’API est sur le **même** domaine d’inscription (souvent laisser vide pour Railway + domaine public `*.up.railway.app`). |
+| Variable                  | Exemple / remarque                                                                                                                                                                                        |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`            | Fourni par l’add-on PostgreSQL Railway (`${{ Postgres.DATABASE_URL }}` ou variable équivalente). **Uniquement côté serveur.**                                                                             |
+| `FRONTEND_ORIGIN`         | `https://elyanis.com` ou liste : `https://elyanis.com,https://www.elyanis.com` (pas d’espace requis, sans `/` final).                                                                                     |
+| `NODE_ENV`                | `production`                                                                                                                                                                                              |
+| `JWT_ACCESS_SECRET`       | Secret aléatoire **≥ 32 caractères** (générer une valeur longue, ne pas commiter le vrai en clair).                                                                                                       |
+| `FORMS_REQUIRE_TURNSTILE` | `false` si vous n’utilisez pas Cloudflare Turnstile sur les formulaires, sinon conserver la valeur adaptée.                                                                                               |
+| `TURNSTILE_SECRET_KEY`    | (Optionnel) Si les formulaires publics exigent Turnstile en production.                                                                                                                                   |
+| `COOKIE_SAMESITE`         | Par défaut en prod le code utilise `none` pour le cookie refresh cross-site. Réglage explicite : `none` (front et API sur des sites différents, HTTPS).                                                   |
+| `COOKIE_SECURE`           | En général `true` en production avec HTTPS. Avec `SameSite=none`, `Secure` doit rester `true` pour que le navigateur accepte le cookie.                                                                   |
+| `COOKIE_DOMAIN`           | (Optionnel) Ex. partager le cookie sur plusieurs sous-domaines **uniquement** si l’API est sur le **même** domaine d’inscription (souvent laisser vide pour Railway + domaine public `*.up.railway.app`). |
 
 **Note** : ce projet stocke les refresh tokens en base (opaque) ; il n’y a pas de `JWT_REFRESH_SECRET` distinct du flux « secret unique » `JWT_ACCESS_SECRET` pour le JWT d’accès. Ne pas confondre avec d’autres projets.
 
@@ -47,12 +47,12 @@ Déployer **tout** le dossier `dist/` (y compris `index.html`).
 
 ## Scripts npm (monorepo racine)
 
-| Commande | Rôle |
-|----------|------|
-| `npm run build` | Build Vite (frontend) + écriture des redirects Netlify si configuré. |
-| `npm start` | Démarrage de l’API compilée : `node backend/dist/index.js` (écoute `PORT`, défaut 3000). |
-| `npm run build:api` | Compilation TypeScript du dossier `backend/`. |
-| `npm run build:production` | `build` + `build:api` (monolithe API + `dist` optionnel côté Node). |
+| Commande                   | Rôle                                                                                     |
+| -------------------------- | ---------------------------------------------------------------------------------------- |
+| `npm run build`            | Build Vite (frontend) + écriture des redirects Netlify si configuré.                     |
+| `npm start`                | Démarrage de l’API compilée : `node backend/dist/index.js` (écoute `PORT`, défaut 3000). |
+| `npm run build:api`        | Compilation TypeScript du dossier `backend/`.                                            |
+| `npm run build:production` | `build` + `build:api` (monolithe API + `dist` optionnel côté Node).                      |
 
 ## Vérifier le backend
 

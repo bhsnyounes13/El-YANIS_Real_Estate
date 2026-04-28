@@ -56,7 +56,7 @@ export default defineConfig(({ mode }) => {
           if (!base) return html;
           const contentEsc = base.replaceAll("&", "&amp;").replaceAll('"', "&quot;");
           const meta = `<meta name="elyanis-api-base" content="${contentEsc}" />`;
-          const script = `<script>window.__ELYANIS_API_BASE__=${JSON.stringify(base)}<\/script>`;
+          const script = `<script>window.__ELYANIS_API_BASE__=${JSON.stringify(base)}</script>`;
           if (html.includes("<head>")) {
             return html.replace("<head>", `<head>\n    ${meta}\n    ${script}`);
           }

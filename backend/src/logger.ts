@@ -1,8 +1,7 @@
 import pino from "pino";
 
 const level =
-  process.env.LOG_LEVEL?.trim() ??
-  (process.env.NODE_ENV === "production" ? "info" : "debug");
+  process.env.LOG_LEVEL?.trim() ?? (process.env.NODE_ENV === "production" ? "info" : "debug");
 
 /** Sortie JSON structurée (agrégable par Datadog, CloudWatch, Loki, ELK, etc.). */
 export const logger = pino({

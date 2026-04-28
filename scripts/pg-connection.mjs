@@ -7,7 +7,9 @@ import { PrismaClient } from "@prisma/client";
 function formatReachabilityError(err) {
   const detail = err instanceof Error ? err.message : String(err);
   const code =
-    err && typeof err === "object" && "code" in err ? String(/** @type {{ code?: string }} */ (err).code) : "";
+    err && typeof err === "object" && "code" in err
+      ? String(/** @type {{ code?: string }} */ (err).code)
+      : "";
   return [
     "",
     "PostgreSQL is not running or not accessible on localhost:5432",

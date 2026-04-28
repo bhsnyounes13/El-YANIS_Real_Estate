@@ -21,7 +21,11 @@ function collectMissingDevRequired(): string[] {
   return missing;
 }
 
-function formatStartupFailure(title: string, lines: string[], options?: { production?: boolean }): Error {
+function formatStartupFailure(
+  title: string,
+  lines: string[],
+  options?: { production?: boolean },
+): Error {
   const banner = "═".repeat(64);
   const production = options?.production === true;
   const tail = production
@@ -73,7 +77,7 @@ export function validateStartupEnvironment(): void {
         `Manquant : ${missing.join(", ")}`,
         "",
         "DATABASE_URL — chaîne PostgreSQL, ex. :",
-        '  postgresql://USER:PASSWORD@localhost:5432/nom_base?schema=public',
+        "  postgresql://USER:PASSWORD@localhost:5432/nom_base?schema=public",
         "",
         "JWT_ACCESS_SECRET — au moins 32 caractères (signatures JWT).",
         "",
@@ -109,29 +113,37 @@ export function validateStartupEnvironment(): void {
 
   const jwtSecret = process.env.JWT_ACCESS_SECRET!.trim();
   if (jwtSecret.length < 32) {
-    throw formatStartupFailure("PRODUCTION — JWT_ACCESS_SECRET invalide", [
-      `Minimum 32 caractères (actuellement ${jwtSecret.length}).`,
-    ], { production: true });
+    throw formatStartupFailure(
+      "PRODUCTION — JWT_ACCESS_SECRET invalide",
+      [`Minimum 32 caractères (actuellement ${jwtSecret.length}).`],
+      { production: true },
+    );
   }
 
   for (const originEntry of config.allowedCorsOrigins) {
     if (originEntry === "*") {
-      throw formatStartupFailure("PRODUCTION — FRONTEND_ORIGIN invalide", [
-        "Le joker * n’est pas autorisé avec CORS + credentials (cookies).",
-      ], { production: true });
+      throw formatStartupFailure(
+        "PRODUCTION — FRONTEND_ORIGIN invalide",
+        ["Le joker * n’est pas autorisé avec CORS + credentials (cookies)."],
+        { production: true },
+      );
     }
     try {
       const u = new URL(originEntry);
       if (u.protocol !== "https:" && u.hostname !== "localhost" && u.hostname !== "127.0.0.1") {
-        throw formatStartupFailure("PRODUCTION — FRONTEND_ORIGIN", [
-          `Utilisez https:// sauf pour localhost / 127.0.0.1 (${originEntry}).`,
-        ], { production: true });
+        throw formatStartupFailure(
+          "PRODUCTION — FRONTEND_ORIGIN",
+          [`Utilisez https:// sauf pour localhost / 127.0.0.1 (${originEntry}).`],
+          { production: true },
+        );
       }
     } catch (e) {
       if (e instanceof TypeError) {
-        throw formatStartupFailure("PRODUCTION — FRONTEND_ORIGIN", [
-          `URL invalide : ${originEntry}`,
-        ], { production: true });
+        throw formatStartupFailure(
+          "PRODUCTION — FRONTEND_ORIGIN",
+          [`URL invalide : ${originEntry}`],
+          { production: true },
+        );
       }
       throw e;
     }

@@ -7,6 +7,10 @@ import { publicFormRateLimiter } from "../middleware/rate-limit.js";
 export function inquiryPublicRoutes(): Router {
   const r = Router();
   r.post("/contact", publicFormRateLimiter, asyncHandler(inquiryController.submitContact));
-  r.post("/inquiries", publicFormRateLimiter, asyncHandler(inquiryController.submitPropertyInquiry));
+  r.post(
+    "/inquiries",
+    publicFormRateLimiter,
+    asyncHandler(inquiryController.submitPropertyInquiry),
+  );
   return r;
 }

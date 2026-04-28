@@ -43,7 +43,7 @@ export const createPropertySchema = z.object({
     .optional(),
   featured: z.boolean().optional(),
   tags: z.array(z.enum(["exclusive", "new", "featured"])).optional(),
-  agent_id: z.string().uuid(),
+  agent_id: z.string().uuid().optional(),
 });
 
 export const updatePropertySchema = createPropertySchema.partial();
@@ -74,10 +74,7 @@ export const updateSiteServiceSchema = createSiteServiceSchema.partial();
 
 const contactFieldsSchema = z
   .object({
-    name: z.preprocess(
-      (v) => (typeof v === "string" ? v.trim() : v),
-      z.string().min(2).max(200),
-    ),
+    name: z.preprocess((v) => (typeof v === "string" ? v.trim() : v), z.string().min(2).max(200)),
     email: z.preprocess(
       (v) => (typeof v === "string" ? v.trim().toLowerCase() : v),
       z.string().email().max(320),
@@ -107,10 +104,7 @@ export const contactBodySchema = contactFieldsSchema.refine(
 
 const propertyInquiryFieldsSchema = z
   .object({
-    name: z.preprocess(
-      (v) => (typeof v === "string" ? v.trim() : v),
-      z.string().min(2).max(200),
-    ),
+    name: z.preprocess((v) => (typeof v === "string" ? v.trim() : v), z.string().min(2).max(200)),
     email: z.preprocess(
       (v) => (typeof v === "string" ? v.trim().toLowerCase() : v),
       z.string().email().max(320),

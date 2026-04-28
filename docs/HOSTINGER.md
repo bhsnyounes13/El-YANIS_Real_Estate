@@ -1,6 +1,6 @@
 # Déploiement sur Hostinger (EL-YANIS)
 
-*« Haustinger » désigne ici **Hostinger** — hébergeur courant pour VPS KVM.*
+_« Haustinger » désigne ici **Hostinger** — hébergeur courant pour VPS KVM._
 
 Ce projet est une **SPA React (Vite)** + **API Express** + **PostgreSQL**. L’hébergement **mutualisé PHP seul** ne convient pas : il faut un **VPS Hostinger** (ou équivalent) avec **Node.js 20+** et **PostgreSQL**.
 
@@ -16,14 +16,14 @@ Ce projet est une **SPA React (Vite)** + **API Express** + **PostgreSQL**. L’h
 
 Sur le serveur, créez un fichier **`.env`** à la racine du dépôt (même principe qu’en local). Indispensables :
 
-| Variable | Rôle |
-|----------|------|
-| `NODE_ENV` | `production` |
-| `DATABASE_URL` | Chaîne Prisma PostgreSQL (hôte souvent interne ou fourni par Hostinger). |
-| `JWT_ACCESS_SECRET` | Au moins 32 caractères, secret fort. |
-| `FRONTEND_ORIGIN` | URL **exacte** du site, ex. `https://votredomaine.com` (HTTPS, une seule origine). |
-| `TURNSTILE_SECRET_KEY` | **Obligatoire** en production (validation au démarrage de l’API). |
-| `PORT` | `3000` par défaut si absent (ou autre port interne ; Nginx proxy vers ce port). |
+| Variable               | Rôle                                                                               |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| `NODE_ENV`             | `production`                                                                       |
+| `DATABASE_URL`         | Chaîne Prisma PostgreSQL (hôte souvent interne ou fourni par Hostinger).           |
+| `JWT_ACCESS_SECRET`    | Au moins 32 caractères, secret fort.                                               |
+| `FRONTEND_ORIGIN`      | URL **exacte** du site, ex. `https://votredomaine.com` (HTTPS, une seule origine). |
+| `TURNSTILE_SECRET_KEY` | **Obligatoire** en production (validation au démarrage de l’API).                  |
+| `PORT`                 | `3000` par défaut si absent (ou autre port interne ; Nginx proxy vers ce port).    |
 
 Images / stockage :
 

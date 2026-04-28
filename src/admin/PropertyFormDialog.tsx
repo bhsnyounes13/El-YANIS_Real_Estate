@@ -157,7 +157,10 @@ const PropertyFormDialog = ({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex min-h-0 flex-1 flex-col overflow-hidden"
+          >
             <div className="border-b px-6 py-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap gap-2">
@@ -198,7 +201,10 @@ const PropertyFormDialog = ({
                       <FormItem>
                         <FormLabel>Titre *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ex: Appartement F4 lumineux au centre-ville" {...field} />
+                          <Input
+                            placeholder="Ex: Appartement F4 lumineux au centre-ville"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -239,11 +245,13 @@ const PropertyFormDialog = ({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {(Object.keys(cityLabels) as PropertyFormValues["city"][]).map((k) => (
-                                <SelectItem key={k} value={k}>
-                                  {cityLabels[k]}
-                                </SelectItem>
-                              ))}
+                              {(Object.keys(cityLabels) as PropertyFormValues["city"][]).map(
+                                (k) => (
+                                  <SelectItem key={k} value={k}>
+                                    {cityLabels[k]}
+                                  </SelectItem>
+                                ),
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -275,7 +283,11 @@ const PropertyFormDialog = ({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Photos du bien *</FormLabel>
-                        <PropertyPhotosField value={field.value} onChange={field.onChange} disabled={isSubmitting} />
+                        <PropertyPhotosField
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={isSubmitting}
+                        />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -337,7 +349,9 @@ const PropertyFormDialog = ({
                       <FormItem>
                         <FormLabel>Agent</FormLabel>
                         <Select
-                          onValueChange={(value) => field.onChange(value === "__none__" ? "" : value)}
+                          onValueChange={(value) =>
+                            field.onChange(value === "__none__" ? "" : value)
+                          }
                           value={field.value || "__none__"}
                         >
                           <FormControl>
@@ -396,14 +410,20 @@ const PropertyFormDialog = ({
               {step === "preview" && (
                 <div className="space-y-4">
                   <div className="rounded-xl border bg-muted/20 p-4">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Aperçu rapide</p>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Aperçu rapide
+                    </p>
                     <h3 className="mt-1 text-lg font-semibold">{titlePreview}</h3>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {values.type === "sale" ? "Vente" : "Location"} · {cityLabels[values.city]} ·{" "}
-                      {new Intl.NumberFormat("fr-DZ", { maximumFractionDigits: 0 }).format(values.price)} DZD
+                      {new Intl.NumberFormat("fr-DZ", { maximumFractionDigits: 0 }).format(
+                        values.price,
+                      )}{" "}
+                      DZD
                     </p>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {values.images.length} photo(s) · {values.agent_id ? "Agent assigné" : "Aucun agent"}
+                      {values.images.length} photo(s) ·{" "}
+                      {values.agent_id ? "Agent assigné" : "Aucun agent"}
                     </p>
                   </div>
                   <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">

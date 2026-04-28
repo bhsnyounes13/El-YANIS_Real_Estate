@@ -6,14 +6,14 @@ L’API peut envoyer une **notification** lorsqu’un visiteur soumet le formula
 
 ## Variables (Railway ou `.env`)
 
-| Variable | Exemple | Rôle |
-|----------|---------|------|
-| `SMTP_HOST` | `smtp.gmail.com` | Serveur sortant |
-| `SMTP_PORT` | `465` (défaut) ou `587` | 465 = TLS direct (`secure: true`) ; 587 = STARTTLS |
-| `SMTP_USER` | adresse du compte mail | Authentification |
-| `SMTP_PASS` | mot de passe d’application | **Ne jamais commiter** |
-| `SMTP_FROM` | `"EL-YANIS <noreply@votredomaine.com>"` | Expéditeur (From) |
-| `SMTP_NOTIFY_TO` | `contact@votredomaine.com` | Destinataire des alertes |
+| Variable         | Exemple                                 | Rôle                                               |
+| ---------------- | --------------------------------------- | -------------------------------------------------- |
+| `SMTP_HOST`      | `smtp.gmail.com`                        | Serveur sortant                                    |
+| `SMTP_PORT`      | `465` (défaut) ou `587`                 | 465 = TLS direct (`secure: true`) ; 587 = STARTTLS |
+| `SMTP_USER`      | adresse du compte mail                  | Authentification                                   |
+| `SMTP_PASS`      | mot de passe d’application              | **Ne jamais commiter**                             |
+| `SMTP_FROM`      | `"EL-YANIS <noreply@votredomaine.com>"` | Expéditeur (From)                                  |
+| `SMTP_NOTIFY_TO` | `contact@votredomaine.com`              | Destinataire des alertes                           |
 
 Si l’une des variables `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` manque, **aucun** e-mail n’est envoyé. Sans `SMTP_NOTIFY_TO`, pas d’envoi non plus (évite d’envoyer sans cible claire).
 

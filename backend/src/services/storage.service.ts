@@ -11,13 +11,7 @@ let s3Client: S3Client | null = null;
 
 export function isObjectStorageConfigured(): boolean {
   const s = config.storage;
-  return Boolean(
-    s.bucket &&
-      s.endpoint &&
-      s.accessKeyId &&
-      s.secretAccessKey &&
-      s.publicUrl,
-  );
+  return Boolean(s.bucket && s.endpoint && s.accessKeyId && s.secretAccessKey && s.publicUrl);
 }
 
 /** S3/R2 complet, ou dossier local `STORAGE_LOCAL_ROOT`. */

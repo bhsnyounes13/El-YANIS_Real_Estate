@@ -88,11 +88,9 @@ export async function removeUser(req: Request, res: Response): Promise<void> {
   if (target.role === "admin") {
     const admins = await userService.countUsersWithRole("admin");
     if (admins <= 1) {
-      throw new HttpError(
-        403,
-        "Impossible de supprimer le dernier administrateur.",
-        { code: "LAST_ADMIN" },
-      );
+      throw new HttpError(403, "Impossible de supprimer le dernier administrateur.", {
+        code: "LAST_ADMIN",
+      });
     }
   }
 

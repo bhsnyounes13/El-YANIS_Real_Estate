@@ -4,11 +4,7 @@ import type { Request, Response, NextFunction } from "express";
  * En production : exige l’en-tête `x-debug-token: $DEBUG_EMAIL_TOKEN`.
  * En développement : autorisé sans jeton.
  */
-export function requireDebugEmailAccess(
-  _req: Request,
-  res: Response,
-  next: NextFunction,
-): void {
+export function requireDebugEmailAccess(_req: Request, res: Response, next: NextFunction): void {
   if (process.env.NODE_ENV !== "production") {
     next();
     return;

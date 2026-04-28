@@ -9,12 +9,11 @@
 
 Créer un fichier `.env` ou configurer les variables sur la plateforme (**Build time** pour tout ce qui commence par `VITE_`).
 
-| Variable              | Obligatoire           | Description                                                                             |
-| --------------------- | --------------------- | --------------------------------------------------------------------------------------- |
-| `VITE_ADMIN_PASSWORD` | **Oui** en production | Mot de passe du panneau `/admin` (jamais commité).                                      |
+| Variable              | Obligatoire                                           | Description                                                                                                                                                                                                              |
+| --------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `VITE_ADMIN_PASSWORD` | **Oui** en production                                 | Mot de passe du panneau `/admin` (jamais commité).                                                                                                                                                                       |
 | `VITE_API_URL`        | **Oui** si l’API est sur un autre domaine que le site | URL du backend **sans** slash final (ex. `https://xxx.up.railway.app`). Si vide : requêtes `/api/…` sur **l’origine du site** (OK seulement avec proxy Nginx ou monolithe). Voir `docs/RAILWAY.md` (API + site séparés). |
-| `VITE_BASE_PATH`      | Non                   | Si l’app est servie sous un sous-chemin (ex. `/app/`). Sinon laisser vide (racine `/`). |
-
+| `VITE_BASE_PATH`      | Non                                                   | Si l’app est servie sous un sous-chemin (ex. `/app/`). Sinon laisser vide (racine `/`).                                                                                                                                  |
 
 **Hostinger + API Railway (production)** : [docs/HOSTINGER_RAILWAY_DEPLOYMENT.md](docs/HOSTINGER_RAILWAY_DEPLOYMENT.md) (variables, CORS, cookies, tests). Exemple de build : [.env.production.example](.env.production.example).
 

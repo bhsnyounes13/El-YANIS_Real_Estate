@@ -140,9 +140,7 @@ export const config = {
     const user = process.env.SMTP_USER?.trim() ?? "";
     const pass = process.env.SMTP_PASS?.trim() ?? "";
     const from = process.env.SMTP_FROM?.trim() ?? "";
-    const port = process.env.SMTP_PORT?.trim()
-      ? Number(process.env.SMTP_PORT)
-      : 465;
+    const port = process.env.SMTP_PORT?.trim() ? Number(process.env.SMTP_PORT) : 465;
     const secure = port === 465;
     const notifyTo = process.env.SMTP_NOTIFY_TO?.trim() ?? "";
     const configured = Boolean(host && user && from && pass);

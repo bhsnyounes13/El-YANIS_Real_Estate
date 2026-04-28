@@ -12,11 +12,9 @@ export async function assertTurnstileIfRequired(
     return;
   }
   if (!config.turnstileSecretKey) {
-    throw new HttpError(
-      503,
-      "Configuration serveur incomplète pour la protection anti-robot.",
-      { code: "TURNSTILE_NOT_CONFIGURED" },
-    );
+    throw new HttpError(503, "Configuration serveur incomplète pour la protection anti-robot.", {
+      code: "TURNSTILE_NOT_CONFIGURED",
+    });
   }
   const ip = getClientIp(req);
   const ok = await verifyTurnstileToken(token, ip);

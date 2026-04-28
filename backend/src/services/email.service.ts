@@ -50,10 +50,7 @@ export async function notifyNewContactForm(id: string, fields: ContactFields): P
   });
 }
 
-export async function notifyNewPropertyInquiry(
-  id: string,
-  fields: InquiryFields,
-): Promise<void> {
+export async function notifyNewPropertyInquiry(id: string, fields: InquiryFields): Promise<void> {
   const to = config.smtp.notifyTo;
   if (!to) return;
   if (!isFormNotificationEnabled()) return;

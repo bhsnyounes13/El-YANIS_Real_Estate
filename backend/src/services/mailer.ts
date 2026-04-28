@@ -35,9 +35,9 @@ function buildTransportOptions() {
 export function isSmtpAuthConfigured(): boolean {
   return Boolean(
     process.env.SMTP_HOST?.trim() &&
-      process.env.SMTP_USER?.trim() &&
-      process.env.SMTP_PASS?.trim() &&
-      process.env.SMTP_FROM?.trim(),
+    process.env.SMTP_USER?.trim() &&
+    process.env.SMTP_PASS?.trim() &&
+    process.env.SMTP_FROM?.trim(),
   );
 }
 
@@ -141,7 +141,14 @@ export function logSmtpErrorSafe(err: unknown, context: string): void {
  */
 export async function runSmtpVerify(): Promise<
   | { ok: true; smtp: "connected" }
-  | { ok: false; error: "SMTP_FAILED"; code?: string; command?: string; message: string; response?: string }
+  | {
+      ok: false;
+      error: "SMTP_FAILED";
+      code?: string;
+      command?: string;
+      message: string;
+      response?: string;
+    }
 > {
   if (!isSmtpAuthConfigured()) {
     return {

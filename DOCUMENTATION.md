@@ -26,11 +26,11 @@ Application web immobilière (Algérie occidentale) : vitrine publique, catalogu
 
 Le système est découpé en **trois couches principales** :
 
-| Couche | Rôle |
-|--------|------|
-| **SPA React** | Interface utilisateur, routage client, React Query pour les données, contextes i18n / thème / auth. |
-| **API Express** | REST JSON, validation, authentification JWT, rôles, persistance via Prisma. |
-| **PostgreSQL** | Données métier (utilisateurs, biens, agents, services page, demandes). |
+| Couche          | Rôle                                                                                                |
+| --------------- | --------------------------------------------------------------------------------------------------- |
+| **SPA React**   | Interface utilisateur, routage client, React Query pour les données, contextes i18n / thème / auth. |
+| **API Express** | REST JSON, validation, authentification JWT, rôles, persistance via Prisma.                         |
+| **PostgreSQL**  | Données métier (utilisateurs, biens, agents, services page, demandes).                              |
 
 En développement, Vite (port **8080**) peut **proxy** les requêtes `/api` vers l’API locale (**3000** par défaut si `PORT` est absent). En production, le frontend et l’API peuvent être sur le même domaine (chemins relatifs `/api/...`) ou sur des origines distinctes (`VITE_API_URL`, `FRONTEND_ORIGIN` pour CORS).
 
@@ -53,27 +53,27 @@ flowchart LR
 
 ## 2. Stack technique
 
-| Domaine | Technologies |
-|---------|----------------|
-| UI | React 19, TypeScript, Vite 7, Tailwind CSS 4, shadcn/ui (Radix), react-router-dom 7 |
-| Données async | TanStack React Query 5 |
-| Formulaires | react-hook-form, Zod |
-| API | Node.js 20+, Express 4, Prisma 5, PostgreSQL |
-| Auth | JWT (accès), cookie httpOnly (rafraîchissement), bcrypt |
-| Optionnel | Cloudflare Turnstile (formulaires / auth), stockage S3-compatible (images admin) |
+| Domaine       | Technologies                                                                        |
+| ------------- | ----------------------------------------------------------------------------------- |
+| UI            | React 19, TypeScript, Vite 7, Tailwind CSS 4, shadcn/ui (Radix), react-router-dom 7 |
+| Données async | TanStack React Query 5                                                              |
+| Formulaires   | react-hook-form, Zod                                                                |
+| API           | Node.js 20+, Express 4, Prisma 5, PostgreSQL                                        |
+| Auth          | JWT (accès), cookie httpOnly (rafraîchissement), bcrypt                             |
+| Optionnel     | Cloudflare Turnstile (formulaires / auth), stockage S3-compatible (images admin)    |
 
 ---
 
 ## 3. Structure du dépôt
 
-| Chemin | Description |
-|--------|-------------|
-| `src/` | Application React (pages, composants, hooks, `lib/api`, auth) |
-| `backend/src/` | Point d’entrée API, `app.ts`, routes, contrôleurs, services, middleware |
-| `backend/prisma/` | Schéma Prisma, migrations, seed |
-| `public/` | Assets statiques copiés dans `dist/` |
-| `docker/` | Configuration Nginx pour image Docker statique |
-| `.env.example` | Variables d’environnement documentées |
+| Chemin            | Description                                                             |
+| ----------------- | ----------------------------------------------------------------------- |
+| `src/`            | Application React (pages, composants, hooks, `lib/api`, auth)           |
+| `backend/src/`    | Point d’entrée API, `app.ts`, routes, contrôleurs, services, middleware |
+| `backend/prisma/` | Schéma Prisma, migrations, seed                                         |
+| `public/`         | Assets statiques copiés dans `dist/`                                    |
+| `docker/`         | Configuration Nginx pour image Docker statique                          |
+| `.env.example`    | Variables d’environnement documentées                                   |
 
 ---
 
@@ -86,17 +86,17 @@ flowchart LR
 
 ### 4.2 Routes React
 
-| Chemin | Composant | Garde |
-|--------|-----------|--------|
-| `/` | Accueil | — |
-| `/listings` | Catalogue | — |
-| `/property/:id` | Détail bien | — |
-| `/services`, `/agents`, `/about`, `/contact` | Pages vitrine | — |
-| `/register` | Inscription | — |
-| `/admin/login` | Connexion admin | — |
-| `/admin` | Tableau de bord admin (`AdminShell`) | `RequireAdmin` |
-| `/admin/users` | Gestion des utilisateurs | `RequireAdmin` |
-| `*` | 404 | Sous `WebLayout` |
+| Chemin                                       | Composant                            | Garde            |
+| -------------------------------------------- | ------------------------------------ | ---------------- |
+| `/`                                          | Accueil                              | —                |
+| `/listings`                                  | Catalogue                            | —                |
+| `/property/:id`                              | Détail bien                          | —                |
+| `/services`, `/agents`, `/about`, `/contact` | Pages vitrine                        | —                |
+| `/register`                                  | Inscription                          | —                |
+| `/admin/login`                               | Connexion admin                      | —                |
+| `/admin`                                     | Tableau de bord admin (`AdminShell`) | `RequireAdmin`   |
+| `/admin/users`                               | Gestion des utilisateurs             | `RequireAdmin`   |
+| `*`                                          | 404                                  | Sous `WebLayout` |
 
 Les pages publiques sont enveloppées dans **`WebLayout`** (barre de navigation, pied de page). Les routes `/admin/*` sont protégées par **`RequireAdmin`** : session chargée, **`user.role === "admin"`** ; sinon redirection vers `/admin/login`.
 
@@ -139,78 +139,78 @@ Préfixe API : **`/api`**. Les corps sont en JSON sauf indication contraire.
 
 ### 6.1 Santé
 
-| Méthode | Chemin | Auth | Description |
-|---------|--------|------|-------------|
-| GET | `/health` | Non | Statut `{ ok: true }` |
+| Méthode | Chemin    | Auth | Description           |
+| ------- | --------- | ---- | --------------------- |
+| GET     | `/health` | Non  | Statut `{ ok: true }` |
 
 ### 6.2 Authentification — `/api/auth`
 
-| Méthode | Chemin | Auth | Description |
-|---------|--------|------|-------------|
-| POST | `/register` | Non | Inscription ; rate limit ; Turnstile si configuré |
-| POST | `/login` | Non | Connexion ; rate limit ; cookie refresh + corps avec `accessToken` |
-| POST | `/logout` | Optionnel | Révoque les refresh tokens ; efface le cookie |
-| POST | `/refresh` | Cookie refresh | Nouveau JWT + rotation du refresh |
-| GET | `/me` | Bearer | Profil utilisateur aligné sur le JWT |
+| Méthode | Chemin      | Auth           | Description                                                        |
+| ------- | ----------- | -------------- | ------------------------------------------------------------------ |
+| POST    | `/register` | Non            | Inscription ; rate limit ; Turnstile si configuré                  |
+| POST    | `/login`    | Non            | Connexion ; rate limit ; cookie refresh + corps avec `accessToken` |
+| POST    | `/logout`   | Optionnel      | Révoque les refresh tokens ; efface le cookie                      |
+| POST    | `/refresh`  | Cookie refresh | Nouveau JWT + rotation du refresh                                  |
+| GET     | `/me`       | Bearer         | Profil utilisateur aligné sur le JWT                               |
 
 ### 6.3 Utilisateur connecté — `/api/user`
 
-| Méthode | Chemin | Auth | Description |
-|---------|--------|------|-------------|
-| GET | `/profile` | Bearer | Profil (utilisateur authentifié) |
+| Méthode | Chemin     | Auth   | Description                      |
+| ------- | ---------- | ------ | -------------------------------- |
+| GET     | `/profile` | Bearer | Profil (utilisateur authentifié) |
 
 ### 6.4 Biens — `/api/properties`
 
-| Méthode | Chemin | Auth | Description |
-|---------|--------|------|-------------|
-| GET | `/` | Non | Liste / recherche (query selon contrôleur) |
-| GET | `/featured` | Non | Biens mis en avant |
-| GET | `/:id` | Non | Détail par identifiant |
-| POST | `/` | Bearer **admin** | Création |
-| PATCH | `/:id` | Bearer **admin** | Mise à jour |
-| DELETE | `/:id` | Bearer **admin** | Suppression |
+| Méthode | Chemin      | Auth             | Description                                |
+| ------- | ----------- | ---------------- | ------------------------------------------ |
+| GET     | `/`         | Non              | Liste / recherche (query selon contrôleur) |
+| GET     | `/featured` | Non              | Biens mis en avant                         |
+| GET     | `/:id`      | Non              | Détail par identifiant                     |
+| POST    | `/`         | Bearer **admin** | Création                                   |
+| PATCH   | `/:id`      | Bearer **admin** | Mise à jour                                |
+| DELETE  | `/:id`      | Bearer **admin** | Suppression                                |
 
 ### 6.5 Agents — `/api/agents`
 
-| Méthode | Chemin | Auth | Description |
-|---------|--------|------|-------------|
-| GET | `/` | Non | Liste |
-| GET | `/:id` | Non | Détail |
-| POST | `/` | Bearer **admin** | Création |
-| PATCH | `/:id` | Bearer **admin** | Mise à jour |
-| DELETE | `/:id` | Bearer **admin** | Suppression |
+| Méthode | Chemin | Auth             | Description |
+| ------- | ------ | ---------------- | ----------- |
+| GET     | `/`    | Non              | Liste       |
+| GET     | `/:id` | Non              | Détail      |
+| POST    | `/`    | Bearer **admin** | Création    |
+| PATCH   | `/:id` | Bearer **admin** | Mise à jour |
+| DELETE  | `/:id` | Bearer **admin** | Suppression |
 
 ### 6.6 Services (page « Services ») — `/api/services`
 
-| Méthode | Chemin | Auth | Description |
-|---------|--------|------|-------------|
-| GET | `/` | Non | Liste des entrées `SiteService` |
-| GET | `/:id` | Non | Détail |
-| POST | `/` | Bearer **admin** | Création |
-| PATCH | `/:id` | Bearer **admin** | Mise à jour |
-| DELETE | `/:id` | Bearer **admin** | Suppression |
+| Méthode | Chemin | Auth             | Description                     |
+| ------- | ------ | ---------------- | ------------------------------- |
+| GET     | `/`    | Non              | Liste des entrées `SiteService` |
+| GET     | `/:id` | Non              | Détail                          |
+| POST    | `/`    | Bearer **admin** | Création                        |
+| PATCH   | `/:id` | Bearer **admin** | Mise à jour                     |
+| DELETE  | `/:id` | Bearer **admin** | Suppression                     |
 
 ### 6.7 Formulaires publics — montés sous `/api`
 
-| Méthode | Chemin | Auth | Description |
-|---------|--------|------|-------------|
-| POST | `/contact` | Non | Soumission contact ; rate limit ; Turnstile si requis |
-| POST | `/inquiries` | Non | Demande liée à un bien ; rate limit ; Turnstile si requis |
+| Méthode | Chemin       | Auth | Description                                               |
+| ------- | ------------ | ---- | --------------------------------------------------------- |
+| POST    | `/contact`   | Non  | Soumission contact ; rate limit ; Turnstile si requis     |
+| POST    | `/inquiries` | Non  | Demande liée à un bien ; rate limit ; Turnstile si requis |
 
 ### 6.8 Administration — `/api/admin`
 
 Toutes les routes exigent **`authenticate` + rôle `admin`** (voir `requireAdminMiddleware`).
 
-| Méthode | Chemin | Description |
-|---------|--------|-------------|
-| GET | `/users` | Liste des comptes (sans hash mot de passe) |
-| PATCH | `/users/:id` | Corps `{ "role": "admin" \| "user" }` |
-| DELETE | `/users/:id` | Suppression compte (règles métier : dernier admin, auto-suppression, etc.) |
-| POST | `/uploads/presign` | URL PUT présignée pour upload d’image (corps `contentType`) |
-| GET | `/dashboard` | Statistiques agrégées (compteurs) |
-| GET | `/inquiries` | Liste des demandes (contact + biens) pour modération |
-| DELETE | `/contact-submissions/:id` | Suppression d’une soumission contact |
-| DELETE | `/property-inquiries/:id` | Suppression d’une demande sur bien |
+| Méthode | Chemin                     | Description                                                                |
+| ------- | -------------------------- | -------------------------------------------------------------------------- |
+| GET     | `/users`                   | Liste des comptes (sans hash mot de passe)                                 |
+| PATCH   | `/users/:id`               | Corps `{ "role": "admin" \| "user" }`                                      |
+| DELETE  | `/users/:id`               | Suppression compte (règles métier : dernier admin, auto-suppression, etc.) |
+| POST    | `/uploads/presign`         | URL PUT présignée pour upload d’image (corps `contentType`)                |
+| GET     | `/dashboard`               | Statistiques agrégées (compteurs)                                          |
+| GET     | `/inquiries`               | Liste des demandes (contact + biens) pour modération                       |
+| DELETE  | `/contact-submissions/:id` | Suppression d’une soumission contact                                       |
+| DELETE  | `/property-inquiries/:id`  | Suppression d’une demande sur bien                                         |
 
 ---
 
@@ -317,15 +317,15 @@ En production, **aucune donnée fictive ni catalogue localStorage** : le catalog
 
 Modèles principaux (Prisma) :
 
-| Modèle | Rôle |
-|--------|------|
-| `User` | Comptes, `Role` (`admin` \| `user`), mot de passe hashé |
-| `RefreshToken` | Sessions de rafraîchissement (liaison `User`, suppression en cascade) |
-| `Agent` | Agents immobiliers |
-| `Property` | Annonces (multilingue, médias JSON, lien `Agent`) |
-| `SiteService` | Entrées de la page Services |
-| `ContactSubmission` | Messages du formulaire contact |
-| `PropertyInquiry` | Demandes liées à un bien |
+| Modèle              | Rôle                                                                  |
+| ------------------- | --------------------------------------------------------------------- |
+| `User`              | Comptes, `Role` (`admin` \| `user`), mot de passe hashé               |
+| `RefreshToken`      | Sessions de rafraîchissement (liaison `User`, suppression en cascade) |
+| `Agent`             | Agents immobiliers                                                    |
+| `Property`          | Annonces (multilingue, médias JSON, lien `Agent`)                     |
+| `SiteService`       | Entrées de la page Services                                           |
+| `ContactSubmission` | Messages du formulaire contact                                        |
+| `PropertyInquiry`   | Demandes liées à un bien                                              |
 
 Énumérations : types de bien (`sale` / `rent`), villes (`CityKey`), tags, etc. — voir **`backend/prisma/schema.prisma`**.
 
@@ -364,15 +364,15 @@ npm run db:seed      # Seed base
 
 ## Références croisées
 
-| Sujet | Emplacement |
-|-------|-------------|
-| Constantes API frontend | `src/lib/api/endpoints.ts` |
-| Schéma base | `backend/prisma/schema.prisma` |
-| Routes Express | `backend/src/routes/*.routes.ts` |
-| Garde admin React | `src/components/admin/RequireAdmin.tsx` |
-| Client HTTP | `src/lib/api/client.ts` |
-| Auth JWT serveur | `backend/src/auth/jwt.ts` |
+| Sujet                   | Emplacement                             |
+| ----------------------- | --------------------------------------- |
+| Constantes API frontend | `src/lib/api/endpoints.ts`              |
+| Schéma base             | `backend/prisma/schema.prisma`          |
+| Routes Express          | `backend/src/routes/*.routes.ts`        |
+| Garde admin React       | `src/components/admin/RequireAdmin.tsx` |
+| Client HTTP             | `src/lib/api/client.ts`                 |
+| Auth JWT serveur        | `backend/src/auth/jwt.ts`               |
 
 ---
 
-*Document généré pour servir de base « prête à l’emploi » ; à adapter si vous ajoutez des routes ou changez les variables d’environnement.*
+_Document généré pour servir de base « prête à l’emploi » ; à adapter si vous ajoutez des routes ou changez les variables d’environnement._

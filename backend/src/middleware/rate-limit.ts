@@ -1,12 +1,11 @@
 import rateLimit from "express-rate-limit";
 
-const json429 = (msg: string) =>
-  (_req: unknown, res: import("express").Response) => {
-    res.status(429).json({
-      error: msg,
-      code: "RATE_LIMIT_EXCEEDED",
-    });
-  };
+const json429 = (msg: string) => (_req: unknown, res: import("express").Response) => {
+  res.status(429).json({
+    error: msg,
+    code: "RATE_LIMIT_EXCEEDED",
+  });
+};
 
 /** Formulaires publics : contact + demande bien */
 export const publicFormRateLimiter = rateLimit({
@@ -36,7 +35,5 @@ export const authRegisterRateLimiter = rateLimit({
   max: 8,
   standardHeaders: true,
   legacyHeaders: false,
-  handler: json429(
-    "Trop de tentatives d’inscription depuis cette adresse. Réessayez plus tard.",
-  ),
+  handler: json429("Trop de tentatives d’inscription depuis cette adresse. Réessayez plus tard."),
 });

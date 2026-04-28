@@ -21,9 +21,7 @@ function isPropertyLike(v: unknown): v is Property {
   if (!v || typeof v !== "object") return false;
   const o = v as Record<string, unknown>;
   return (
-    typeof o.title_en === "string" &&
-    typeof o.title_fr === "string" &&
-    Array.isArray(o.images)
+    typeof o.title_en === "string" && typeof o.title_fr === "string" && Array.isArray(o.images)
   );
 }
 

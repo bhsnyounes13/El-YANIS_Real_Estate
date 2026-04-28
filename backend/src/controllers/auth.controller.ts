@@ -88,20 +88,36 @@ export async function login(req: Request, res: Response): Promise<void> {
   await assertTurnstileIfRequired(turnstileToken, req);
 
   const user = await userService.findUserByEmail(email);
-  const valid = user && (await verifyPassword(password, user.passwordHash));
+  
+  // Dev mode: check bootstrap admin credentials directly
+  const isDevMode = process.env.NODE_ENV !== "production";
+  const bootstrapEmail = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase();
+  const bootstrapPassword = process.env.BOOTSTRAP_ADMIN_PASSWORD?.trim();
+  const isBootstrapAdmin = 
+    isDevMode && 
+    bootstrapEmail && 
+    bootstrapPassword && 
+    email.trim().toLowerCase() === bootstrapEmail &&
+    password === bootstrapPassword;
+  
+  const valid = isBootstrapAdmin || (user && (await verifyPassword(password, user.passwordHash)));
   if (!valid) {
     throw new HttpError(401, "E-mail ou mot de passe incorrect.", { code: "INVALID_CREDENTIALS" });
   }
 
-  await revokeAllUserRefreshTokens(user!.id);
-  const accessToken = signAccessToken(user!.id, user!.email, user!.role);
-  const { rawToken, expiresAt } = await createRefreshToken(user!.id);
+  if (!user) {
+    throw new HttpError(401, "User not found", { code: "USER_NOT_FOUND" });
+  }
+
+  await revokeAllUserRefreshTokens(user.id);
+  const accessToken = signAccessToken(user.id, user.email, user.role);
+  const { rawToken, expiresAt } = await createRefreshToken(user.id);
   setRefreshCookie(res, rawToken, expiresAt);
 
   res.json({
     accessToken,
     expiresIn: config.accessTokenExpiresIn,
-    user: publicUser(user!),
+    user: publicUser(user),
   });
 }
 

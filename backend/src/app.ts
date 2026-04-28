@@ -75,11 +75,9 @@ const PUBLIC_API_ROUTES: string[] = [
 ];
 
 const require = createRequire(import.meta.url);
-const pinoHttp = require("pino-http") as (opts?: PinoHttpOptions) => (
-  req: IncomingMessage,
-  res: ServerResponse,
-  next: () => void,
-) => void;
+const pinoHttp = require("pino-http") as (
+  opts?: PinoHttpOptions,
+) => (req: IncomingMessage, res: ServerResponse, next: () => void) => void;
 
 export function createApp() {
   const app = express();
@@ -118,33 +116,43 @@ export function createApp() {
   app.get(
     "/api/health",
     asyncHandler(async (_req, res) => {
-      try {
-        await prisma.$connect();
-        const { ok, missing } = await getRequiredTableStatus(prisma);
-        if (!ok) {
+      if (process.env.NODE_ENV === "production") {
+        try {
+          await prisma.$connect();
+          const { ok, missing } = await getRequiredTableStatus(prisma);
+          if (!ok) {
+            res.status(500).json({
+              ok: false,
+              error: "DATABASE_SCHEMA_NOT_READY",
+              missingTables: missing,
+            });
+            return;
+          }
+          res.status(200).json({
+            ok: true,
+            database: "connected",
+            tables: {
+              User: true,
+              Property: true,
+              Agent: true,
+            },
+          });
+          return;
+        } catch (e) {
+          const err = e instanceof Error ? e.message : String(e);
           res.status(500).json({
             ok: false,
-            error: "DATABASE_SCHEMA_NOT_READY",
-            missingTables: missing,
+            error: "DATABASE_UNAVAILABLE",
+            message: err,
           });
           return;
         }
+      } else {
         res.status(200).json({
           ok: true,
-          database: "connected",
-          tables: {
-            User: true,
-            Property: true,
-            Agent: true,
-          },
-        });
-        return;
-      } catch (e) {
-        const err = e instanceof Error ? e.message : String(e);
-        res.status(500).json({
-          ok: false,
-          error: "DATABASE_UNAVAILABLE",
-          message: err,
+          environment: "development",
+          database: "skipped (dev mode)",
+          message: "API is running",
         });
         return;
       }
@@ -266,11 +274,7 @@ export function createApp() {
   app.use(
     pinoHttp({
       logger,
-      customLogLevel(
-        _req: IncomingMessage,
-        res: ServerResponse,
-        err?: Error,
-      ) {
+      customLogLevel(_req: IncomingMessage, res: ServerResponse, err?: Error) {
         if (err) return "error";
         if (res.statusCode >= 500) return "error";
         if (res.statusCode >= 400) return "warn";

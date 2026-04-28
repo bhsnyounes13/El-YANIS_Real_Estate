@@ -46,7 +46,11 @@ export function getApiBase(): string {
     if (fromMeta) return fromMeta;
   }
 
-  if (import.meta.env.PROD && typeof window !== "undefined" && window.__ELYANIS_API_BASE__?.trim()) {
+  if (
+    import.meta.env.PROD &&
+    typeof window !== "undefined" &&
+    window.__ELYANIS_API_BASE__?.trim()
+  ) {
     return normalizeBaseUrl(window.__ELYANIS_API_BASE__);
   }
 

@@ -11,10 +11,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 const distRedirects = path.join(root, "dist", "_redirects");
 
-const raw =
-  process.env.NETLIFY_API_PROXY_TARGET?.trim() ||
-  process.env.VITE_API_URL?.trim() ||
-  "";
+const raw = process.env.NETLIFY_API_PROXY_TARGET?.trim() || process.env.VITE_API_URL?.trim() || "";
 const origin = raw.replace(/\/$/, "");
 
 if (!origin) {

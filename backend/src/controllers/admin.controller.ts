@@ -5,19 +5,14 @@ import { HttpError } from "../errors/http-error.js";
 
 /** Vue synthétique pour le tableau de bord admin (données réelles). */
 export async function dashboard(_req: Request, res: Response): Promise<void> {
-  const [
-    userCount,
-    adminCount,
-    propertyCount,
-    contactSubmissionCount,
-    propertyInquiryCount,
-  ] = await Promise.all([
-    prisma.user.count(),
-    prisma.user.count({ where: { role: "admin" } }),
-    prisma.property.count(),
-    prisma.contactSubmission.count(),
-    prisma.propertyInquiry.count(),
-  ]);
+  const [userCount, adminCount, propertyCount, contactSubmissionCount, propertyInquiryCount] =
+    await Promise.all([
+      prisma.user.count(),
+      prisma.user.count({ where: { role: "admin" } }),
+      prisma.property.count(),
+      prisma.contactSubmission.count(),
+      prisma.propertyInquiry.count(),
+    ]);
 
   res.json({
     stats: {

@@ -2,10 +2,7 @@ import { Router } from "express";
 import * as authController from "../controllers/auth.controller.js";
 import { asyncHandler } from "../middleware/async-handler.js";
 import { authenticate } from "../middleware/auth.middleware.js";
-import {
-  authLoginRateLimiter,
-  authRegisterRateLimiter,
-} from "../middleware/rate-limit.js";
+import { authLoginRateLimiter, authRegisterRateLimiter } from "../middleware/rate-limit.js";
 
 export function authRoutes(): Router {
   const r = Router();

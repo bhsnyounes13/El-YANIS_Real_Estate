@@ -16,7 +16,8 @@ export interface AuthUser {
 function resolveAuthPath(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   if (getApiBase()) return resolveApiUrl(normalized);
-  const legacy = (import.meta.env.VITE_AUTH_API_BASE as string | undefined)?.trim().replace(/\/$/, "") ?? "";
+  const legacy =
+    (import.meta.env.VITE_AUTH_API_BASE as string | undefined)?.trim().replace(/\/$/, "") ?? "";
   if (legacy) return `${legacy}${normalized}`;
   return normalized;
 }
@@ -29,7 +30,9 @@ function formatAuthFailure(kind: "login" | "register", status: number, bodyError
   if (status === 404) {
     return "API introuvable (404) : l’URL d’API est probablement mal configurée. Définissez VITE_API_URL (sans slash final) au build (voir .env.production.example), recompilez (npm run build) et redéployez le front. Vous pouvez aussi proxyfier /api/ vers l’API (docs/HOSTINGER.md). Test : ouvrez /api/health sur l’hôte cible (ex. l’URL Railway) dans le navigateur.";
   }
-  return kind === "login" ? `Échec de la connexion (${status})` : `Échec de l’inscription (${status})`;
+  return kind === "login"
+    ? `Échec de la connexion (${status})`
+    : `Échec de l’inscription (${status})`;
 }
 
 async function parseJson<T>(res: Response): Promise<T> {
